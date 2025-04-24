@@ -1,5 +1,7 @@
+"use client"
 import { GameCard } from "@/components/game/GameCard";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from 'react-i18next';
 
 // 模拟游戏数据
 const allGames = [
@@ -128,15 +130,22 @@ const allGames = [
   }
 ];
 
-// 游戏分类
-const categories = [
-  "全部", "角色扮演", "多人竞技", "沙盒", "冒险", "策略", "射击", "体育", "赛车"
-];
-
 export default function StorePage() {
+  const { t } = useTranslation();
+  const categories = [
+    t('all', '全部'),
+    t('rpg', '角色扮演'),
+    t('moba', '多人竞技'),
+    t('sandbox', '沙盒'),
+    t('adventure', '冒险'),
+    t('strategy', '策略'),
+    t('shooter', '射击'),
+    t('sports', '体育'),
+    t('racing', '赛车'),
+  ];
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">游戏商店</h1>
+      <h1 className="text-3xl font-bold mb-8">{t('store', '游戏商店')}</h1>
       
       {/* 过滤工具条 */}
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
@@ -155,17 +164,17 @@ export default function StorePage() {
           
           <div className="flex gap-4">
             <select className="rounded-md border border-gray-300 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="relevance">相关度</option>
-              <option value="price_low">价格: 低到高</option>
-              <option value="price_high">价格: 高到低</option>
-              <option value="rating">评分: 高到低</option>
-              <option value="release">发行日期: 新到旧</option>
+              <option value="relevance">{t('sort_relevance', '相关度')}</option>
+              <option value="price_low">{t('sort_price_low', '价格: 低到高')}</option>
+              <option value="price_high">{t('sort_price_high', '价格: 高到低')}</option>
+              <option value="rating">{t('sort_rating', '评分: 高到低')}</option>
+              <option value="release">{t('sort_release', '发行日期: 新到旧')}</option>
             </select>
             
             <div className="relative">
               <input 
                 type="search" 
-                placeholder="搜索游戏..." 
+                placeholder={t('search_games', '搜索游戏...')} 
                 className="rounded-md border border-gray-300 pl-10 pr-3 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <svg 
@@ -198,7 +207,7 @@ export default function StorePage() {
       <div className="flex justify-center mt-12">
         <nav className="flex items-center space-x-2">
           <Button variant="outline" size="sm" disabled>
-            上一页
+            {t('prev', '上一页')}
           </Button>
           <Button variant="default" size="sm">1</Button>
           <Button variant="outline" size="sm">2</Button>
@@ -206,7 +215,7 @@ export default function StorePage() {
           <span className="px-2">...</span>
           <Button variant="outline" size="sm">10</Button>
           <Button variant="outline" size="sm">
-            下一页
+            {t('next', '下一页')}
           </Button>
         </nav>
       </div>

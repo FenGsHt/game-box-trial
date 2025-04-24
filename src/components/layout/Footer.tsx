@@ -1,14 +1,18 @@
+"use client"
+
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next';
 
 export function Footer() {
+  const { t } = useTranslation();
   return (
     <footer className="bg-gray-900 text-white pt-12 pb-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4">游戏盒子</h3>
+            <h3 className="text-xl font-bold mb-4">{t('home')}</h3>
             <p className="text-gray-400 mb-4">
-              您的一站式游戏中心，提供最新最热的游戏、资讯和互动社区。
+              {t('footer_desc', '您的一站式游戏中心，提供最新最热的游戏、资讯和互动社区。')}
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -30,83 +34,83 @@ export function Footer() {
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-4">快速链接</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('quick_links', '快速链接')}</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-                  首页
+                  {t('home')}
                 </Link>
               </li>
               <li>
                 <Link href="/store" className="text-gray-400 hover:text-white transition-colors">
-                  商店
+                  {t('store')}
                 </Link>
               </li>
               <li>
                 <Link href="/categories" className="text-gray-400 hover:text-white transition-colors">
-                  分类
+                  {t('categories')}
                 </Link>
               </li>
               <li>
                 <Link href="/library" className="text-gray-400 hover:text-white transition-colors">
-                  我的游戏库
+                  {t('games')}
                 </Link>
               </li>
               <li>
                 <Link href="/community" className="text-gray-400 hover:text-white transition-colors">
-                  社区
+                  {t('community')}
                 </Link>
               </li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-4">支持</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('support', '支持')}</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/help" className="text-gray-400 hover:text-white transition-colors">
-                  帮助中心
+                  {t('help_center', '帮助中心')}
                 </Link>
               </li>
               <li>
                 <Link href="/faq" className="text-gray-400 hover:text-white transition-colors">
-                  常见问题
+                  {t('faq', '常见问题')}
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">
-                  联系我们
+                  {t('contact_us', '联系我们')}
                 </Link>
               </li>
               <li>
                 <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
-                  隐私政策
+                  {t('privacy_policy', '隐私政策')}
                 </Link>
               </li>
               <li>
                 <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
-                  服务条款
+                  {t('terms_of_service', '服务条款')}
                 </Link>
               </li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-4">订阅最新消息</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('subscribe_news', '订阅最新消息')}</h3>
             <p className="text-gray-400 mb-4">
-              获取最新游戏资讯、优惠和活动通知。
+              {t('subscribe_desc', '获取最新游戏资讯、优惠和活动通知。')}
             </p>
             <form className="flex flex-col space-y-2">
               <input
                 type="email"
-                placeholder="输入您的邮箱"
+                placeholder={t('input_email', '输入您的邮箱')}
                 className="bg-gray-800 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
               >
-                订阅
+                {t('subscribe', '订阅')}
               </button>
             </form>
           </div>
@@ -114,13 +118,13 @@ export function Footer() {
         
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} 游戏盒子. 保留所有权利.
+            &copy; {new Date().getFullYear()} {t('home')}. {t('all_rights_reserved', '保留所有权利.')}
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <img src="/payment-visa.svg" alt="Visa" className="h-8" />
             <img src="/payment-mastercard.svg" alt="Mastercard" className="h-8" />
-            <img src="/payment-alipay.svg" alt="支付宝" className="h-8" />
-            <img src="/payment-wechat.svg" alt="微信支付" className="h-8" />
+            <img src="/payment-alipay.svg" alt={t('alipay', '支付宝')} className="h-8" />
+            <img src="/payment-wechat.svg" alt={t('wechat_pay', '微信支付')} className="h-8" />
           </div>
         </div>
       </div>

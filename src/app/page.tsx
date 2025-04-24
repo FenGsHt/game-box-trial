@@ -1,7 +1,9 @@
+"use client"
 import Image from "next/image";
 import Link from "next/link";
 import { GameCard } from "@/components/game/GameCard";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from 'react-i18next';
 
 // 模拟游戏数据
 const featuredGames = [
@@ -69,6 +71,21 @@ const featuredGames = [
 ];
 
 export default function Home() {
+  const { t } = useTranslation();
+  const categories = [
+    { name: t('action', '动作'), icon: '🎯', color: 'bg-red-100' },
+    { name: t('adventure', '冒险'), icon: '🗺️', color: 'bg-green-100' },
+    { name: t('rpg', '角色扮演'), icon: '🧙', color: 'bg-blue-100' },
+    { name: t('strategy', '策略'), icon: '♟️', color: 'bg-yellow-100' },
+    { name: t('simulation', '模拟'), icon: '🚗', color: 'bg-purple-100' },
+    { name: t('sports', '体育'), icon: '⚽', color: 'bg-orange-100' },
+    { name: t('racing', '赛车'), icon: '🏎️', color: 'bg-pink-100' },
+    { name: t('indie', '独立'), icon: '🎮', color: 'bg-indigo-100' },
+    { name: t('multiplayer', '多人'), icon: '👥', color: 'bg-teal-100' },
+    { name: t('horror', '恐怖'), icon: '👻', color: 'bg-red-100' },
+    { name: t('sandbox', '沙盒'), icon: '🏝️', color: 'bg-blue-100' },
+    { name: t('music', '音乐'), icon: '🎵', color: 'bg-purple-100' },
+  ];
   return (
     <div className="flex flex-col">
       {/* 英雄区域 */}
@@ -76,7 +93,7 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/bg.jpg"
-            alt="游戏背景"
+            alt={t('hero_bg', '游戏背景')}
             fill
             priority
             className="object-cover brightness-50"
@@ -85,17 +102,17 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-2xl text-white">
             <h1 className="text-5xl font-bold mb-4">
-              发现您的下一个游戏冒险
+              {t('discover_next_adventure', '发现您的下一个游戏冒险')}
             </h1>
             <p className="text-xl mb-8">
-              游戏盒子提供数千款游戏，从AAA大作到独立精品，总有一款适合您。
+              {t('hero_desc', '游戏盒子提供数千款游戏，从AAA大作到独立精品，总有一款适合您。')}
             </p>
             <div className="flex space-x-4">
               <Button size="lg" asChild>
-                <Link href="/store">浏览游戏</Link>
+                <Link href="/store">{t('browse_games', '浏览游戏')}</Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link href="/signup">加入社区</Link>
+                <Link href="/signup">{t('join_community', '加入社区')}</Link>
               </Button>
             </div>
           </div>
@@ -106,9 +123,9 @@ export default function Home() {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold">精选游戏</h2>
+            <h2 className="text-3xl font-bold">{t('featured_games', '精选游戏')}</h2>
             <Link href="/store" className="text-blue-600 hover:underline">
-              查看更多
+              {t('see_more', '查看更多')}
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -122,22 +139,9 @@ export default function Home() {
       {/* 分类 */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-10 text-center">按类别浏览</h2>
+          <h2 className="text-3xl font-bold mb-10 text-center">{t('browse_by_category', '按类别浏览')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { name: "动作", icon: "🎯", color: "bg-red-100" },
-              { name: "冒险", icon: "🗺️", color: "bg-green-100" },
-              { name: "角色扮演", icon: "🧙", color: "bg-blue-100" },
-              { name: "策略", icon: "♟️", color: "bg-yellow-100" },
-              { name: "模拟", icon: "🚗", color: "bg-purple-100" },
-              { name: "体育", icon: "⚽", color: "bg-orange-100" },
-              { name: "赛车", icon: "🏎️", color: "bg-pink-100" },
-              { name: "独立", icon: "🎮", color: "bg-indigo-100" },
-              { name: "多人", icon: "👥", color: "bg-teal-100" },
-              { name: "恐怖", icon: "👻", color: "bg-red-100" },
-              { name: "沙盒", icon: "🏝️", color: "bg-blue-100" },
-              { name: "音乐", icon: "🎵", color: "bg-purple-100" }
-            ].map((category, index) => (
+            {categories.map((category, index) => (
               <Link 
                 key={index} 
                 href={`/categories/${category.name}`}
@@ -154,21 +158,21 @@ export default function Home() {
       {/* 订阅区域 */}
       <section className="py-16 bg-blue-600 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">获取最新游戏资讯和独家优惠</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('get_latest_news', '获取最新游戏资讯和独家优惠')}</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            订阅我们的通讯，第一时间获取游戏发售信息、优惠活动和独家内容。
+            {t('subscribe_tips', '订阅我们的通讯，第一时间获取游戏发售信息、优惠活动和独家内容。')}
           </p>
           <div className="flex flex-col md:flex-row justify-center max-w-md mx-auto">
             <input
               type="email"
-              placeholder="您的邮箱地址"
+              placeholder={t('input_email', '您的邮箱地址')}
               className="px-4 py-3 rounded-l md:rounded-r-none mb-2 md:mb-0 w-full text-gray-900 focus:outline-none"
             />
             <Button 
               size="lg" 
               className="md:rounded-l-none"
             >
-              订阅
+              {t('subscribe', '订阅')}
             </Button>
           </div>
         </div>
@@ -177,7 +181,7 @@ export default function Home() {
       {/* 平台特性 */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-12 text-center">为什么选择游戏盒子</h2>
+          <h2 className="text-3xl font-bold mb-12 text-center">{t('why_choose_us', '为什么选择游戏盒子')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="flex flex-col items-center text-center">
               <div className="bg-blue-100 p-4 rounded-full mb-4">
@@ -196,9 +200,9 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">海量游戏库</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('huge_library', '海量游戏库')}</h3>
               <p className="text-gray-600">
-                数千款游戏任您选择，从大型AAA游戏到独立精品，应有尽有。
+                {t('huge_library_desc', '数千款游戏任您选择，从大型AAA游戏到独立精品，应有尽有。')}
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
@@ -218,9 +222,9 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">活跃社区</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('active_community', '活跃社区')}</h3>
               <p className="text-gray-600">
-                与全球玩家交流，分享游戏心得，组队游戏，结交志同道合的朋友。
+                {t('active_community_desc', '与全球玩家交流，分享游戏心得，组队游戏，结交志同道合的朋友。')}
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
@@ -240,9 +244,9 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">超值优惠</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('great_deals', '超值优惠')}</h3>
               <p className="text-gray-600">
-                定期折扣活动，会员专属优惠，让您以最优惠的价格享受游戏乐趣。
+                {t('great_deals_desc', '定期折扣活动，会员专属优惠，让您以最优惠的价格享受游戏乐趣。')}
               </p>
             </div>
           </div>

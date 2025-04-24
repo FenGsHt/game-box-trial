@@ -3,13 +3,19 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from 'react-i18next'
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { t, i18n } = useTranslation();
   
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
 
   return (
     <nav className="bg-white shadow-sm py-4 fixed w-full top-0 z-50">
@@ -18,31 +24,31 @@ export function Navbar() {
           <div className="relative w-8 h-8">
             <Image 
               src="/logo.svg" 
-              alt="游戏盒子"
+              alt={t('home')}
               fill
               className="object-contain"
             />
           </div>
-          <span className="text-xl font-bold text-blue-600">游戏盒子</span>
+          <span className="text-xl font-bold text-blue-600">{t('home')}</span>
         </Link>
 
         {/* 桌面导航 */}
         <div className="hidden md:flex items-center space-x-8">
           <div className="flex space-x-6">
             <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors">
-              首页
+              {t('home')}
             </Link>
             <Link href="/store" className="text-gray-700 hover:text-blue-600 transition-colors">
-              商店
+              {t('store')}
             </Link>
             <Link href="/categories" className="text-gray-700 hover:text-blue-600 transition-colors">
-              分类
+              {t('categories')}
             </Link>
             <Link href="/library" className="text-gray-700 hover:text-blue-600 transition-colors">
-              我的游戏库
+              {t('games')}
             </Link>
             <Link href="/community" className="text-gray-700 hover:text-blue-600 transition-colors">
-              社区
+              {t('community')}
             </Link>
           </div>
 
@@ -69,8 +75,12 @@ export function Navbar() {
               </div>
             </Link>
             <Button variant="default" size="sm" asChild>
-              <Link href="/signin">登录</Link>
+              <Link href="/signin">{t('login')}</Link>
             </Button>
+            <div className="ml-2">
+              <button onClick={() => changeLanguage('zh')} className="px-2">中</button>|
+              <button onClick={() => changeLanguage('en')} className="px-2">EN</button>
+            </div>
           </div>
         </div>
 
@@ -114,35 +124,35 @@ export function Navbar() {
               className="text-gray-700 hover:text-blue-600 transition-colors py-2"
               onClick={toggleMenu}
             >
-              首页
+              {t('home')}
             </Link>
             <Link 
               href="/store" 
               className="text-gray-700 hover:text-blue-600 transition-colors py-2"
               onClick={toggleMenu}
             >
-              商店
+              {t('store')}
             </Link>
             <Link 
               href="/categories" 
               className="text-gray-700 hover:text-blue-600 transition-colors py-2"
               onClick={toggleMenu}
             >
-              分类
+              {t('categories')}
             </Link>
             <Link 
               href="/library" 
               className="text-gray-700 hover:text-blue-600 transition-colors py-2"
               onClick={toggleMenu}
             >
-              我的游戏库
+              {t('games')}
             </Link>
             <Link 
               href="/community" 
               className="text-gray-700 hover:text-blue-600 transition-colors py-2"
               onClick={toggleMenu}
             >
-              社区
+              {t('community')}
             </Link>
             <div className="flex items-center justify-between py-2">
               <Link
@@ -164,11 +174,15 @@ export function Navbar() {
                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" 
                   />
                 </svg>
-                <span>购物车</span>
+                <span>{t('cart')}</span>
               </Link>
               <Button variant="default" size="sm" asChild>
-                <Link href="/signin" onClick={toggleMenu}>登录</Link>
+                <Link href="/signin" onClick={toggleMenu}>{t('login')}</Link>
               </Button>
+              <div className="ml-2">
+                <button onClick={() => changeLanguage('zh')} className="px-2">中</button>|
+                <button onClick={() => changeLanguage('en')} className="px-2">EN</button>
+              </div>
             </div>
           </div>
         </div>
