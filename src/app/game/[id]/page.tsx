@@ -84,6 +84,9 @@ export default async function GamePage({ params }: { params: { id: string } }): 
   // 实际项目中，应该根据 ID 从后端获取游戏数据
   const game = gameDetails;
   
+  // 只需加这一行即可
+  console.log(params.id);
+
   // 计算折扣百分比
   const discountPercentage = game.discountPrice 
     ? Math.round(((game.price - game.discountPrice) / game.price) * 100) 
