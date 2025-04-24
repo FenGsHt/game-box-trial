@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file://E%3A/git3/game-box-trial/src/app/providers.tsx"],"sourcesContent":["'use client'\n\nimport { ReactNode } from 'react'\nimport { QueryClient, QueryClientProvider } from '@tanstack/react-query'\n\n// 创建一个 QueryClient 实例\nconst queryClient = new QueryClient({\n  defaultOptions: {\n    queries: {\n      staleTime: 60 * 1000, // 1分钟\n      refetchOnWindowFocus: false,\n    },\n  },\n})\n\ninterface ProvidersProps {\n  children: ReactNode\n}\n\nexport function Providers({ children }: ProvidersProps) {\n  return (\n    <QueryClientProvider client={queryClient}>\n      {children}\n    </QueryClientProvider>\n  )\n} "],"names":[],"mappings":";;;;AAGA;AAAA;AAHA;;;AAKA,sBAAsB;AACtB,MAAM,cAAc,IAAI,gLAAA,CAAA,cAAW,CAAC;IAClC,gBAAgB;QACd,SAAS;YACP,WAAW,KAAK;YAChB,sBAAsB;QACxB;IACF;AACF;AAMO,SAAS,UAAU,EAAE,QAAQ,EAAkB;IACpD,qBACE,6LAAC,yLAAA,CAAA,sBAAmB;QAAC,QAAQ;kBAC1B;;;;;;AAGP;KANgB","debugId":null}}]
-}

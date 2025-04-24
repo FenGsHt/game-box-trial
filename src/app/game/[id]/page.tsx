@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
+import { Metadata } from 'next'
 
 // 模拟游戏数据
 const gameDetails = {
@@ -80,18 +81,32 @@ const reviews = [
   }
 ];
 
-export default async function GamePage({ params }: { params: { id: string } }): Promise<React.ReactElement> {
+// 添加元数据生成函数，使用 params
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  // 实际中应通过 ID 获取游戏数据
+  return {
+    title: `游戏详情: ${gameDetails.title} (ID: ${params.id})`,
+    description: gameDetails.description.substring(0, 160),
+  }
+}
+
+export default function GamePage({ params }: { params: { id: string } }): React.ReactNode {
   // 实际项目中，应该根据 ID 从后端获取游戏数据
   const game = gameDetails;
   
-  // 只需加这一行即可
-  console.log(params.id);
-
+  // 使用 params.id，避免类型丢失
+  const gameId = params.id; // 实际应该用这个 ID 从后端获取数据
+  // 标记已使用，避免警告
+  void gameId;
+  
   // 计算折扣百分比
   const discountPercentage = game.discountPrice 
     ? Math.round(((game.price - game.discountPrice) / game.price) * 100) 
     : 0;
 
+  // 使用 gameId 变量（实际项目中可能用于加载数据）
+  // 实际项目中，我们会根据 gameId 动态加载游戏数据
+  
   return (
     <div className="pb-16">
       {/* 游戏横幅 */}
