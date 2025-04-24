@@ -1,3 +1,4 @@
+import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -79,7 +80,7 @@ const reviews = [
   }
 ];
 
-export default function GamePage({ params }: { params: { id: string } }) {
+export default async function GamePage({ params }: { params: { id: string } }): Promise<React.ReactElement> {
   // 实际项目中，应该根据 ID 从后端获取游戏数据
   const game = gameDetails;
   
