@@ -1,11 +1,11 @@
 "use client"
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Game } from '@/lib/supabase'
 import { formatGameRating } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { GameImage } from './GameImage'
 
 interface GameCardProps {
   game: Game
@@ -34,7 +34,7 @@ export function GameCard({ game }: GameCardProps) {
     >
       <Link href={`/game/${id}`} className="block">
         <div className="relative h-48 w-full">
-          <Image
+          <GameImage
             src={imageUrl || '/images/placeholder-game.jpg'}
             alt={title}
             fill
