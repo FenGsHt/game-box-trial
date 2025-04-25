@@ -4,15 +4,12 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
-
-// 聊天消息类型
-interface ChatMessage {
-  id: string
-  content: string
-  sender_id: string
-  sender_name: string
-  created_at: string
-}
+import { 
+  ChatMessage, 
+  fetchChatMessages, 
+  sendChatMessage, 
+  subscribeToChatMessages 
+} from '@/lib/chatApi'
 
 // 用户类型
 interface User {
@@ -65,18 +62,17 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // 模拟初始消息
-  const initialMessages: ChatMessage[] = [
-    {
-      id: '1',
-      content: t('welcome_message', '欢迎来到游戏盒子聊天室！有什么可以帮助您的吗？'),
-      sender_id: 'system',
-      sender_name: t('system', '系统'),
-      created_at: new Date().toISOString()
-    }
-  ]
+  // 系统欢迎消息
+  const welcomeMessage: ChatMessage = {
+    id: 'welcome',
+    content: t('welcome_message', '欢迎来到游戏盒子聊天室！有什么可以帮助您的吗？'),
+    sender_id: 'system',
+    sender_name: t('system', '系统'),
+    created_at: new Date().toISOString()
+  }
 
   // 获取用户信息
   useEffect(() => {
@@ -91,13 +87,38 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
     }
   }, [])
 
-  // 加载初始消息
+  // 加载历史消息并设置实时订阅
   useEffect(() => {
-    setMessages(initialMessages)
+    // 先显示欢迎消息
+    setMessages([welcomeMessage])
     
-    // 这里可以从数据库加载历史消息
-    // 实际项目中应该从后端API获取消息历史
-  }, [])
+    // 如果窗口已打开则加载历史消息
+    if (isOpen) {
+      setIsLoading(true)
+      
+      // 从Supabase加载最近的消息
+      fetchChatMessages(50)
+        .then(data => {
+          if (data.length > 0) {
+            // 合并系统欢迎消息和历史消息
+            setMessages([welcomeMessage, ...data])
+          }
+          setIsLoading(false)
+        })
+        .catch(error => {
+          console.error('获取消息失败:', error)
+          setIsLoading(false)
+        })
+      
+      // 设置实时订阅
+      const unsubscribe = subscribeToChatMessages((newMsg) => {
+        setMessages(current => [...current, newMsg])
+      })
+      
+      // 清理订阅
+      return unsubscribe
+    }
+  }, [isOpen])
 
   // 滚动到底部
   useEffect(() => {
@@ -107,29 +128,27 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
   }, [messages])
 
   // 发送消息
-  const sendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!newMessage.trim()) return
-    
-    // 创建新消息
-    const message: ChatMessage = {
-      id: Date.now().toString(),
-      content: newMessage,
-      sender_id: user?.id || 'guest',
-      sender_name: user?.email?.split('@')[0] || t('guest', '访客'),
-      created_at: new Date().toISOString()
-    }
-    
-    // 添加到消息列表
-    setMessages([...messages, message])
-    
-    // 清空输入框
-    setNewMessage('')
-    
-    // 这里可以添加将消息发送到服务器的代码
-    // 例如: supabase.from('messages').insert([message])
-  }
+   const handleSendMessage = async (e: React.FormEvent) => {
+     e.preventDefault()
+     
+     if (!newMessage.trim()) return
+     
+     // 清空输入框
+     const messageContent = newMessage
+     setNewMessage('')
+     
+     try {
+       // 确保用户ID是UUID格式
+       const userId = user?.id || 'guest';
+       await sendChatMessage(
+         messageContent,
+         userId,
+         user?.email?.split('@')[0] || t('guest', '访客')
+       )
+     } catch (error) {
+       console.error('发送消息失败:', error)
+     }
+   }
 
   // 如果窗口关闭则不渲染
   if (!isOpen) return null
@@ -150,35 +169,41 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
       
       {/* 消息区域 */}
       <div className="flex-1 p-4 overflow-y-auto max-h-80 bg-gray-50">
-        {messages.map((msg) => (
-          <div 
-            key={msg.id} 
-            className={`mb-3 max-w-[85%] ${msg.sender_id === (user?.id || 'guest') ? 'ml-auto' : ''}`}
-          >
-            <div className="flex items-center mb-1">
-              <span className="text-xs font-medium text-gray-500">
-                {msg.sender_id === (user?.id || 'guest') ? t('you', '你') : msg.sender_name}
-              </span>
-              <span className="text-xs text-gray-400 ml-2">
-                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-            <div 
-              className={`p-3 rounded-lg ${
-                msg.sender_id === (user?.id || 'guest') 
-                  ? 'bg-blue-500 text-white rounded-br-none' 
-                  : 'bg-white border border-gray-200 rounded-bl-none'
-              }`}
-            >
-              {msg.content}
-            </div>
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
           </div>
-        ))}
+        ) : (
+          messages.map((msg) => (
+            <div 
+              key={msg.id} 
+              className={`mb-3 max-w-[85%] ${msg.sender_id === (user?.id || 'guest') ? 'ml-auto' : ''}`}
+            >
+              <div className="flex items-center mb-1">
+                <span className="text-xs font-medium text-gray-500">
+                  {msg.sender_id === (user?.id || 'guest') ? t('you', '你') : msg.sender_name}
+                </span>
+                <span className="text-xs text-gray-400 ml-2">
+                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              <div 
+                className={`p-3 rounded-lg ${
+                  msg.sender_id === (user?.id || 'guest') 
+                    ? 'bg-blue-500 text-white rounded-br-none' 
+                    : 'bg-white border border-gray-200 rounded-bl-none'
+                }`}
+              >
+                {msg.content}
+              </div>
+            </div>
+          ))
+        )}
         <div ref={messagesEndRef} />
       </div>
       
       {/* 输入区域 */}
-      <form onSubmit={sendMessage} className="p-3 border-t border-gray-200 flex items-center">
+      <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-200 flex items-center">
         <input
           type="text"
           value={newMessage}
