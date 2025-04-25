@@ -60,6 +60,7 @@ const StarFilledIcon = (props: { className?: string }) => (
     className={props.className} 
     viewBox="0 0 24 24" 
     fill="currentColor"
+    filter="drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.1))"
   >
     <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z" />
   </svg>
@@ -73,7 +74,8 @@ const StarEmptyIcon = (props: { className?: string }) => (
     viewBox="0 0 24 24" 
     fill="none"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="1.5"
+    filter="drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.05))"
   >
     <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z" />
   </svg>
@@ -85,18 +87,25 @@ const StarHalfIcon = (props: { className?: string }) => (
     xmlns="http://www.w3.org/2000/svg" 
     className={props.className} 
     viewBox="0 0 24 24"
+    filter="drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.1))"
   >
     <defs>
-      <linearGradient id="halfStar" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="50%" stopColor="currentColor" />
-        <stop offset="50%" stopColor="transparent" />
-      </linearGradient>
+      <clipPath id="leftHalf">
+        <rect x="0" y="0" width="12" height="24" />
+      </clipPath>
     </defs>
     <path 
-      fill="url(#halfStar)" 
-      stroke="currentColor" 
+      d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z"
+      stroke="currentColor"
       strokeWidth="1"
-      d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z" 
+      fill="none"
+      className="text-gray-300"
+    />
+    <path 
+      d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z"
+      fill="currentColor"
+      clipPath="url(#leftHalf)"
+      className="text-amber-500"
     />
   </svg>
 )
@@ -115,25 +124,27 @@ const RatingStars = ({
 }) => {
   // 根据大小设置星星尺寸
   const starSizeClass = {
-    sm: 'h-3 w-3',
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6'
+    sm: 'h-4 w-4',
+    md: 'h-6 w-6',
+    lg: 'h-8 w-8'
   }[size];
   
   // 渲染星星
   const renderStar = (value: number) => {
-    const isHalfStar = value % 1 !== 0;
-    const starValue = isHalfStar ? Math.floor(value) + 0.5 : value;
-    const isFilled = (rating || 0) >= starValue;
-    const isHalf = isHalfStar && (rating || 0) >= value && (rating || 0) < Math.ceil(value);
+    const currentRating = rating || 0;
     
-    if (isHalf) {
-      return <StarHalfIcon className={`${starSizeClass} text-yellow-500`} />;
+    // 完全填充
+    if (currentRating >= value) {
+      return <StarFilledIcon className={`${starSizeClass} text-amber-500`} />;
     }
     
-    return isFilled ? 
-      <StarFilledIcon className={`${starSizeClass} text-yellow-500`} /> :
-      <StarEmptyIcon className={`${starSizeClass} text-gray-300`} />;
+    // 半星（当评分值位于整数和整数+0.5之间时）
+    if (currentRating >= value - 0.5 && currentRating < value) {
+      return <StarHalfIcon className={`${starSizeClass} text-amber-500`} />;
+    }
+    
+    // 空星
+    return <StarEmptyIcon className={`${starSizeClass} text-gray-300 hover:text-amber-200`} />;
   };
   
   return (
@@ -141,7 +152,7 @@ const RatingStars = ({
       {[1, 2, 3, 4, 5].map((star) => (
         <div 
           key={star} 
-          className={`relative ${readOnly ? '' : 'cursor-pointer'}`}
+          className={`relative ${readOnly ? '' : 'cursor-pointer'} mx-0.5 hover:scale-110 transition-transform`}
           onClick={() => !readOnly && onChange && onChange(star)}
         >
           {/* 整星 */}
@@ -152,7 +163,7 @@ const RatingStars = ({
           {/* 半星选择区域 - 只有在非只读模式下显示 */}
           {!readOnly && (
             <div 
-              className="absolute top-0 left-0 w-1/2 h-full z-10"
+              className="absolute top-0 left-0 w-1/2 h-full z-10 hover:bg-blue-100/10"
               onClick={(e) => {
                 e.stopPropagation();
                 if (onChange) {
@@ -368,19 +379,20 @@ export function GameTodoList() {
           {t('todo_empty', '您的待玩游戏清单为空，添加一些游戏吧！')}
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-6">
           {todos.map((todo) => (
-            <li key={todo.id} className="flex flex-col border-b pb-3 mb-3">
+            <li key={todo.id} className="flex flex-col border-b pb-4 mb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Checkbox 
                     id={`todo-${todo.id}`}
                     checked={todo.is_completed}
                     onCheckedChange={() => toggleTodo(todo.id, todo.is_completed)}
+                    className="h-5 w-5"
                   />
                   <label 
                     htmlFor={`todo-${todo.id}`}
-                    className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'}`}
+                    className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium`}
                   >
                     {todo.title}
                   </label>
@@ -394,14 +406,25 @@ export function GameTodoList() {
                 </button>
               </div>
               
-              <div className="ml-7 mt-2">
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-500 mr-2">{t('rating', '评分')}:</span>
-                  <RatingStars 
-                    rating={todo.rating} 
-                    onChange={(newRating) => updateRating(todo.id, newRating)}
-                    size="sm"
-                  />
+              <div className="ml-7 mt-3">
+                <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors p-3 rounded-lg shadow-sm">
+                  <span className="text-sm font-medium text-gray-600 mr-3">{t('rating', '评分')}:</span>
+                  <div className="flex-grow">
+                    <RatingStars 
+                      rating={todo.rating} 
+                      onChange={(newRating) => updateRating(todo.id, newRating)}
+                      size="md"
+                    />
+                  </div>
+                  {todo.rating ? (
+                    <span className="ml-2 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                      {todo.rating}
+                    </span>
+                  ) : (
+                    <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+                      {t('not_rated', '未评分')}
+                    </span>
+                  )}
                 </div>
               </div>
             </li>
