@@ -22,6 +22,47 @@ const FacebookIcon = (props: { className?: string }) => (
   </svg>
 )
 
+// 支付方式图标组件
+const VisaIcon = (props: { className?: string }) => (
+  <svg className={props.className} viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="38" height="24" rx="4" fill="#F9F9F9"/>
+    <path d="M15.22 15.36H13.04L14.28 8.64H16.46L15.22 15.36Z" fill="#00579F"/>
+    <path d="M22.48 8.82C22.04 8.64 21.32 8.46 20.44 8.46C18.44 8.46 17 9.54 16.98 11.04C16.96 12.16 17.98 12.78 18.76 13.16C19.56 13.54 19.8 13.78 19.8 14.1C19.8 14.6 19.2 14.84 18.64 14.84C17.88 14.84 17.48 14.72 16.84 14.42L16.6 14.3L16.34 16.12C16.86 16.36 17.8 16.58 18.78 16.58C20.9 16.58 22.32 15.52 22.34 13.9C22.36 13.02 21.8 12.34 20.58 11.78C19.84 11.42 19.4 11.16 19.4 10.78C19.4 10.42 19.82 10.06 20.66 10.06C21.36 10.04 21.88 10.22 22.28 10.4L22.46 10.48L22.72 8.72L22.48 8.82Z" fill="#00579F"/>
+    <path d="M25.5 8.64H23.92C23.42 8.64 23.04 8.78 22.84 9.34L19.92 15.36H22.04L22.44 14.24H24.94L25.14 15.36H27.02L25.5 8.64ZM22.98 12.7C23.2 12.14 23.9 10.28 23.9 10.28C23.9 10.28 24.06 9.84 24.16 9.58L24.28 10.24C24.28 10.24 24.68 12.18 24.8 12.7H22.98Z" fill="#00579F"/>
+    <path d="M12.14 8.64L10.18 13.16L9.98 12.14C9.64 10.9 8.54 9.56 7.32 8.94L9.06 15.36H11.2L14.3 8.64H12.14Z" fill="#00579F"/>
+    <path d="M8.78 8.64H5.5L5.46 8.82C8.02 9.44 9.7 11.06 10.36 13.16L9.62 9.36C9.52 8.8 9.2 8.66 8.78 8.64Z" fill="#F9A533"/>
+  </svg>
+)
+
+const MastercardIcon = (props: { className?: string }) => (
+  <svg className={props.className} viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="38" height="24" rx="4" fill="#F9F9F9"/>
+    <path d="M22.12 5.72H15.88V18.28H22.12V5.72Z" fill="#FF5A00"/>
+    <path d="M16.32 12C16.32 9.48 17.52 7.24 19.38 5.72C17.86 4.48 15.9 3.72 13.78 3.72C8.98 3.72 5.08 7.4 5.08 12C5.08 16.6 8.98 20.28 13.78 20.28C15.9 20.28 17.86 19.52 19.38 18.28C17.52 16.76 16.32 14.52 16.32 12Z" fill="#EB001B"/>
+    <path d="M32.92 12C32.92 16.6 29.02 20.28 24.22 20.28C22.1 20.28 20.14 19.52 18.62 18.28C20.48 16.76 21.68 14.52 21.68 12C21.68 9.48 20.48 7.24 18.62 5.72C20.14 4.48 22.1 3.72 24.22 3.72C29.02 3.72 32.92 7.4 32.92 12Z" fill="#F79E1B"/>
+  </svg>
+)
+
+const AlipayIcon = (props: { className?: string }) => (
+  <svg className={props.className} viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="38" height="24" rx="4" fill="#F9F9F9"/>
+    <path d="M30.14 15.6C28.22 13.96 25.82 12.28 25.82 12.28L25.46 12.48C25.46 12.48 25.94 13.04 26.26 13.84C26.58 14.64 25.78 15.4 24.82 15.4H10.34C10.34 15.4 12.06 8.92 17.38 8.92C20.78 8.92 23.7 11.08 23.7 11.08C23.7 11.08 24.74 8.08 24.78 7.6C24.82 7.12 24.5 6.96 23.82 6.96C23.14 6.96 19.78 6.96 17.78 6.96C11.62 6.96 7.86 12.96 7.86 17.04C7.86 19.56 9.66 20.4 11.86 20.4H27.62C28.86 20.4 29.5 19.2 29.5 18.36C29.5 17.52 29.18 16.56 30.14 15.6Z" fill="#0D91D6"/>
+    <path d="M25.46 12.48L25.82 12.28C25.82 12.28 28.22 13.96 30.14 15.6C29.18 16.56 29.5 17.52 29.5 18.36C29.5 19.2 28.86 20.4 27.62 20.4H11.86C9.66 20.4 7.86 19.56 7.86 17.04C7.86 12.96 11.62 6.96 17.78 6.96C19.78 6.96 23.14 6.96 23.82 6.96C24.5 6.96 24.82 7.12 24.78 7.6C24.74 8.08 23.7 11.08 23.7 11.08C23.7 11.08 20.78 8.92 17.38 8.92C12.06 8.92 10.34 15.4 10.34 15.4H24.82C25.78 15.4 26.58 14.64 26.26 13.84C25.94 13.04 25.46 12.48 25.46 12.48Z" fill="#0D91D6"/>
+  </svg>
+)
+
+const WechatPayIcon = (props: { className?: string }) => (
+  <svg className={props.className} viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="38" height="24" rx="4" fill="#F9F9F9"/>
+    <path d="M16.8 9.68C16.8 6.56 13.52 4 9.48 4C5.44 4 2.16 6.56 2.16 9.68C2.16 12.8 5.44 15.36 9.48 15.36C10.36 15.36 11.2 15.2 11.96 14.92L13.68 15.68L13.08 14.04C15.32 13 16.8 11.48 16.8 9.68Z" fill="#51B148"/>
+    <path d="M9.48 6.92C8.88 6.92 8.4 7.4 8.4 7.96C8.4 8.52 8.88 9 9.48 9C10.08 9 10.56 8.52 10.56 7.96C10.56 7.4 10.08 6.92 9.48 6.92Z" fill="#51B148"/>
+    <path d="M14.76 6.92C14.16 6.92 13.68 7.4 13.68 7.96C13.68 8.52 14.16 9 14.76 9C15.36 9 15.84 8.52 15.84 7.96C15.84 7.4 15.36 6.92 14.76 6.92Z" fill="#51B148"/>
+    <path d="M35.84 14.32C35.84 11.68 32.92 9.52 29.36 9.52C25.8 9.52 22.88 11.68 22.88 14.32C22.88 16.96 25.8 19.12 29.36 19.12C30.12 19.12 30.84 19 31.52 18.76L33.04 19.4L32.52 18C34.48 17.12 35.84 15.8 35.84 14.32Z" fill="#51B148"/>
+    <path d="M26.92 12.48C26.4 12.48 25.96 12.88 25.96 13.36C25.96 13.84 26.4 14.24 26.92 14.24C27.44 14.24 27.88 13.84 27.88 13.36C27.88 12.88 27.44 12.48 26.92 12.48Z" fill="#51B148"/>
+    <path d="M31.8 12.48C31.28 12.48 30.84 12.88 30.84 13.36C30.84 13.84 31.28 14.24 31.8 14.24C32.32 14.24 32.76 13.84 32.76 13.36C32.76 12.88 32.32 12.48 31.8 12.48Z" fill="#51B148"/>
+  </svg>
+)
+
 export function Footer() {
   const { t } = useTranslation();
   return (
@@ -34,13 +75,13 @@ export function Footer() {
               {t('footer_desc', '您的一站式游戏中心，提供最新最热的游戏、资讯和互动社区。')}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label={t('social_twitter', 'Twitter')}>
                 <TwitterIcon className="h-6 w-6" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label={t('social_instagram', 'Instagram')}>
                 <InstagramIcon className="h-6 w-6" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label={t('social_facebook', 'Facebook')}>
                 <FacebookIcon className="h-6 w-6" />
               </a>
             </div>
@@ -131,13 +172,13 @@ export function Footer() {
         
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} {t('home')}. {t('all_rights_reserved', '保留所有权利.')}
+            &copy; {new Date().getFullYear()} {t('company_name', 'GameBox')}. {t('all_rights_reserved', '保留所有权利.')}
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
-            <img src="/payment-visa.svg" alt="Visa" className="h-8" />
-            <img src="/payment-mastercard.svg" alt="Mastercard" className="h-8" />
-            <img src="/payment-alipay.svg" alt={t('alipay', '支付宝')} className="h-8" />
-            <img src="/payment-wechat.svg" alt={t('wechat_pay', '微信支付')} className="h-8" />
+            <VisaIcon className="h-8" />
+            <MastercardIcon className="h-8" />
+            <AlipayIcon className="h-8" />
+            <WechatPayIcon className="h-8" />
           </div>
         </div>
       </div>
