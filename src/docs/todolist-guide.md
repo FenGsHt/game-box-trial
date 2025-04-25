@@ -6,8 +6,9 @@
 
 1. 添加待玩游戏
 2. 标记游戏为已玩/未玩
-3. 删除不再需要的游戏记录
-4. 实时同步更新（多设备同步）
+3. 为游戏评分（1-5星，支持半星评价）
+4. 删除不再需要的游戏记录
+5. 实时同步更新（多设备同步）
 
 ## 技术实现
 
@@ -16,7 +17,7 @@
 - **前端**: React + TypeScript + Next.js
 - **后端/数据库**: Supabase (PostgreSQL)
 - **实时同步**: Supabase实时订阅
-- **UI组件**: 自定义Checkbox、Input等组件
+- **UI组件**: 自定义Checkbox、Input、Rating Stars等组件
 
 ## 数据库设置
 
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS game_todos (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   is_completed BOOLEAN DEFAULT FALSE,
+  rating NUMERIC(2,1) CHECK (rating >= 0 AND rating <= 5),
   user_id UUID NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -36,8 +38,9 @@ CREATE TABLE IF NOT EXISTS game_todos (
 
 ## 组件说明
 
-1. **GameTodoList组件**: 核心组件，包含添加、切换、删除待玩游戏的功能
-2. **TodoListPage页面**: 包含待玩游戏清单的页面组件
+1. **GameTodoList组件**: 核心组件，包含添加、标记、评分和删除待玩游戏的功能
+2. **RatingStars组件**: 星级评分组件，支持1-5星评分，可选择半星
+3. **TodoListPage页面**: 包含待玩游戏清单的页面组件
 
 ## 使用步骤
 
@@ -57,20 +60,28 @@ CREATE TABLE IF NOT EXISTS game_todos (
 
 点击游戏前的复选框可以切换游戏的完成状态。
 
-### 4. 删除游戏
+### 4. 为游戏评分
+
+在每个游戏项目下方有五颗星星的评分系统：
+1. 点击整颗星星给予整数评分（1-5星）
+2. 点击星星的左半部分给予半星评分（0.5, 1.5, 2.5, 3.5, 4.5星）
+3. 评分会自动保存到数据库并实时同步到所有设备
+
+### 5. 删除游戏
 
 点击游戏右侧的删除图标可以从清单中移除该游戏。
 
 ## 实时同步功能
 
-所有操作都会实时同步到数据库，并通过Supabase的实时订阅功能同步到所有已登录的设备上。这意味着：
+所有操作（包括添加、标记完成、评分和删除）都会实时同步到数据库，并通过Supabase的实时订阅功能同步到所有已登录的设备上。这意味着：
 
 1. 在手机上添加的游戏会立即显示在电脑上
-2. 多设备间的状态变更会实时更新
+2. 多设备间的状态变更和评分会实时更新
 3. 数据永久保存在用户的账户中
 
 ## 注意事项
 
 1. 使用该功能需要用户登录
 2. 未登录用户将看到登录提示
-3. 数据与用户帐户绑定，不同用户看到的是各自的清单 
+3. 数据与用户帐户绑定，不同用户看到的是各自的清单
+4. 评分为可选项，默认新添加的游戏评分为0（未评分） 

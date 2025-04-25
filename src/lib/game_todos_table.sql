@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS game_todos (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   is_completed BOOLEAN DEFAULT FALSE,
+  rating NUMERIC(2,1) CHECK (rating >= 0 AND rating <= 5),
   user_id UUID NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

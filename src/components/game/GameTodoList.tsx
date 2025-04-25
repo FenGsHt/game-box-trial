@@ -13,6 +13,7 @@ export interface GameTodo {
   title: string
   is_completed: boolean
   user_id: string
+  rating?: number  // 游戏评分，1-5分，支持半星
   created_at: string
 }
 
@@ -51,6 +52,120 @@ const TrashIcon = (props: { className?: string }) => (
     />
   </svg>
 )
+
+// 星星图标 - 实心
+const StarFilledIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    viewBox="0 0 24 24" 
+    fill="currentColor"
+  >
+    <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z" />
+  </svg>
+)
+
+// 星星图标 - 空心
+const StarEmptyIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    viewBox="0 0 24 24" 
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z" />
+  </svg>
+)
+
+// 星星图标 - 半星
+const StarHalfIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    viewBox="0 0 24 24"
+  >
+    <defs>
+      <linearGradient id="halfStar" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="50%" stopColor="currentColor" />
+        <stop offset="50%" stopColor="transparent" />
+      </linearGradient>
+    </defs>
+    <path 
+      fill="url(#halfStar)" 
+      stroke="currentColor" 
+      strokeWidth="1"
+      d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z" 
+    />
+  </svg>
+)
+
+// 评分选择组件
+const RatingStars = ({ 
+  rating, 
+  onChange, 
+  readOnly = false,
+  size = 'md'
+}: { 
+  rating?: number; 
+  onChange?: (rating: number) => void; 
+  readOnly?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+}) => {
+  // 根据大小设置星星尺寸
+  const starSizeClass = {
+    sm: 'h-3 w-3',
+    md: 'h-5 w-5',
+    lg: 'h-6 w-6'
+  }[size];
+  
+  // 渲染星星
+  const renderStar = (value: number) => {
+    const isHalfStar = value % 1 !== 0;
+    const starValue = isHalfStar ? Math.floor(value) + 0.5 : value;
+    const isFilled = (rating || 0) >= starValue;
+    const isHalf = isHalfStar && (rating || 0) >= value && (rating || 0) < Math.ceil(value);
+    
+    if (isHalf) {
+      return <StarHalfIcon className={`${starSizeClass} text-yellow-500`} />;
+    }
+    
+    return isFilled ? 
+      <StarFilledIcon className={`${starSizeClass} text-yellow-500`} /> :
+      <StarEmptyIcon className={`${starSizeClass} text-gray-300`} />;
+  };
+  
+  return (
+    <div className="flex items-center">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <div 
+          key={star} 
+          className={`relative ${readOnly ? '' : 'cursor-pointer'}`}
+          onClick={() => !readOnly && onChange && onChange(star)}
+        >
+          {/* 整星 */}
+          <div>
+            {renderStar(star)}
+          </div>
+          
+          {/* 半星选择区域 - 只有在非只读模式下显示 */}
+          {!readOnly && (
+            <div 
+              className="absolute top-0 left-0 w-1/2 h-full z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onChange) {
+                  onChange(star - 0.5);
+                }
+              }}
+            ></div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export function GameTodoList() {
   const { t } = useTranslation()
@@ -146,6 +261,7 @@ export function GameTodoList() {
       const newTodoItem = {
         title: newTodo.trim(),
         is_completed: false,
+        rating: 0, // 默认评分为0
         user_id: user.id
       }
       
@@ -178,6 +294,23 @@ export function GameTodoList() {
       }
     } catch (error) {
       console.error('更新待玩游戏状态异常:', error)
+    }
+  }
+
+  // 更新游戏评分
+  const updateRating = async (id: string, rating: number) => {
+    try {
+      const { error } = await supabase
+        .from('game_todos')
+        .update({ rating })
+        .eq('id', id)
+        .eq('user_id', user?.id)
+      
+      if (error) {
+        console.error('更新游戏评分失败:', error)
+      }
+    } catch (error) {
+      console.error('更新游戏评分异常:', error)
     }
   }
 
@@ -237,27 +370,40 @@ export function GameTodoList() {
       ) : (
         <ul className="space-y-3">
           {todos.map((todo) => (
-            <li key={todo.id} className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-3">
-                <Checkbox 
-                  id={`todo-${todo.id}`}
-                  checked={todo.is_completed}
-                  onCheckedChange={() => toggleTodo(todo.id, todo.is_completed)}
-                />
-                <label 
-                  htmlFor={`todo-${todo.id}`}
-                  className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'}`}
+            <li key={todo.id} className="flex flex-col border-b pb-3 mb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Checkbox 
+                    id={`todo-${todo.id}`}
+                    checked={todo.is_completed}
+                    onCheckedChange={() => toggleTodo(todo.id, todo.is_completed)}
+                  />
+                  <label 
+                    htmlFor={`todo-${todo.id}`}
+                    className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'}`}
+                  >
+                    {todo.title}
+                  </label>
+                </div>
+                <button 
+                  onClick={() => deleteTodo(todo.id)}
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                  aria-label={t('todo_delete', '删除')}
                 >
-                  {todo.title}
-                </label>
+                  <TrashIcon className="h-5 w-5" />
+                </button>
               </div>
-              <button 
-                onClick={() => deleteTodo(todo.id)}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-                aria-label={t('todo_delete', '删除')}
-              >
-                <TrashIcon className="h-5 w-5" />
-              </button>
+              
+              <div className="ml-7 mt-2">
+                <div className="flex items-center">
+                  <span className="text-sm text-gray-500 mr-2">{t('rating', '评分')}:</span>
+                  <RatingStars 
+                    rating={todo.rating} 
+                    onChange={(newRating) => updateRating(todo.id, newRating)}
+                    size="sm"
+                  />
+                </div>
+              </div>
             </li>
           ))}
         </ul>
