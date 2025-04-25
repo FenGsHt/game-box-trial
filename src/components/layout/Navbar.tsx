@@ -5,16 +5,20 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
+import { getProfile } from '@/lib/profileApi'
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<{ username?: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user));
+    getProfile().then(setProfile);
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      getProfile().then(setProfile);
     });
     return () => { listener?.subscription.unsubscribe(); };
   }, []);
@@ -35,7 +39,7 @@ export function Navbar() {
   return (
     <nav className="bg-white/90 backdrop-blur shadow-sm py-3 fixed w-full top-0 z-50 border-b border-gray-100">
       <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center space-x-1 group">
+        <Link href="/" className="flex items-center space-x-1 group flex-shrink-0">
           <div className="relative w-9 h-9">
             <Image 
               src="/logo.svg" 
@@ -57,7 +61,7 @@ export function Navbar() {
             <Link href="/community" className="nav-link">{t('community')}</Link>
           </div>
           <div className="flex items-center space-x-3 ml-6">
-            <Link href="/cart" className="relative group">
+            <Link href="/cart" className="relative group flex-shrink-0 ml-2 md:ml-0">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 className="h-6 w-6 text-gray-500 group-hover:text-blue-600 transition-colors"
@@ -75,17 +79,17 @@ export function Navbar() {
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">0</span>
             </Link>
             {!user ? (
-              <>
-                <Button variant="default" size="sm" asChild>
-                  <Link href="/signin">{t('login')}</Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/signup">{t('register')}</Link>
-                </Button>
-              </>
+              <Button variant="default" size="sm" asChild>
+                <Link href="/signin">{t('login')}/{t('register')}</Link>
+              </Button>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-gray-700 text-sm font-medium">{user.email}</span>
+                <span className="text-gray-700 text-sm font-medium">
+                  {profile?.username ? `${profile.username}（${user.email}）` : user.email}
+                </span>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/profile">个人中心</Link>
+                </Button>
                 <Button variant="outline" size="sm" onClick={handleLogout}>{t('logout')}</Button>
               </div>
             )}
@@ -99,7 +103,7 @@ export function Navbar() {
 
         {/* 移动端菜单按钮 */}
         <button 
-          className="md:hidden text-gray-600"
+          className="md:hidden text-gray-600 ml-2"
           onClick={toggleMenu}
         >
           <svg 
@@ -156,17 +160,17 @@ export function Navbar() {
                 <span>{t('cart')}</span>
               </Link>
               {!user ? (
-                <>
-                  <Button variant="default" size="sm" asChild>
-                    <Link href="/signin">{t('login')}</Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/signup">{t('register')}</Link>
-                  </Button>
-                </>
+                <Button variant="default" size="sm" asChild>
+                  <Link href="/signin">{t('login')}/{t('register')}</Link>
+                </Button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-700 text-sm font-medium">{user.email}</span>
+                  <span className="text-gray-700 text-sm font-medium">
+                    {profile?.username ? `${profile.username}(${user.email})` : user.email}
+                  </span>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/profile">个人中心</Link>
+                  </Button>
                   <Button variant="outline" size="sm" onClick={handleLogout}>{t('logout')}</Button>
                 </div>
               )}

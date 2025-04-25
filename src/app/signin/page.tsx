@@ -1,29 +1,59 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function SigninPage() {
+export default function AuthPage() {
+  const searchParams = useSearchParams();
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleSignin = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'signup') setIsLogin(false);
+    if (mode === 'login') setIsLogin(true);
+  }, [searchParams]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message);
+    if (isLogin) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError(error.message);
+      } else {
+        router.push("/");
+      }
     } else {
-      router.push("/");
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        setError(error.message);
+      } else {
+        alert("注册成功，请查收邮箱激活账号！");
+        setIsLogin(true);
+      }
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      }
+    });
+    if (error) {
+      alert(error.message);
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">登录账号</h1>
-      <form onSubmit={handleSignin} className="space-y-4">
+      <h1 className="text-2xl font-bold mb-4">{isLogin ? '登录账号' : '注册账号'}</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <input
           className="w-full border p-2 rounded"
           type="email"
@@ -42,9 +72,19 @@ export default function SigninPage() {
         />
         {error && <div className="text-red-500">{error}</div>}
         <button className="w-full bg-blue-600 text-white py-2 rounded" type="submit">
-          登录
+          {isLogin ? '登录' : '注册'}
         </button>
       </form>
+      <button onClick={handleGoogleLogin} className="w-full bg-red-500 text-white py-2 rounded mt-4">
+        使用 Google 登录
+      </button>
+      <div className="mt-4 text-center">
+        {isLogin ? (
+          <span>没有账号？ <button className="text-blue-600 hover:underline" onClick={() => setIsLogin(false)}>注册</button></span>
+        ) : (
+          <span>已有账号？ <button className="text-blue-600 hover:underline" onClick={() => setIsLogin(true)}>登录</button></span>
+        )}
+      </div>
     </div>
   );
 } 
