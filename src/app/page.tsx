@@ -83,7 +83,7 @@ export default function Home() {
     <div className="flex flex-col">
       {/* 英雄区域 */}
       <section className="relative h-[80vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
+        {/* <div className="absolute inset-0 z-0">
           <Image
             src="/images/bg.jpg"
             alt={t('hero_bg', '游戏背景')}
@@ -106,52 +106,10 @@ export default function Home() {
               </Button>
             </div>
           </div>
-        </div>
+        </div> */}
       </section>
 
-      {/* 特性区域 */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">{t('why_gamebox', '为什么选择GameBox')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* 特性1 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 flex items-center justify-center bg-blue-100 text-blue-600 rounded-lg mb-4">
-                <ControllerIcon className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">{t('feature_games', '海量游戏')}</h3>
-              <p className="text-gray-600">{t('feature_games_desc', '超过10000款游戏，横跨各种类型和平台')}</p>
-            </div>
-            
-            {/* 特性2 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 flex items-center justify-center bg-green-100 text-green-600 rounded-lg mb-4">
-                <CollectionIcon className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">{t('feature_collection', '个人收藏')}</h3>
-              <p className="text-gray-600">{t('feature_collection_desc', '管理您的游戏库，追踪您的成就和游戏时间')}</p>
-            </div>
-            
-            {/* 特性3 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 flex items-center justify-center bg-purple-100 text-purple-600 rounded-lg mb-4">
-                <CommunityIcon className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">{t('feature_community', '活跃社区')}</h3>
-              <p className="text-gray-600">{t('feature_community_desc', '与其他游戏玩家互动，分享心得和体验')}</p>
-            </div>
-            
-            {/* 特性4 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 flex items-center justify-center bg-red-100 text-red-600 rounded-lg mb-4">
-                <SaleIcon className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">{t('feature_deals', '限时优惠')}</h3>
-              <p className="text-gray-600">{t('feature_deals_desc', '定期促销和独家折扣，帮您省钱')}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+    
       
       {/* 可以根据需要添加更多内容 */}
     </div>
