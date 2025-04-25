@@ -75,6 +75,24 @@ const GameBoxLogo = (props: IconProps) => (
   </svg>
 )
 
+// 待玩清单图标
+const TodoListIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" 
+    />
+  </svg>
+)
+
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { t, i18n } = useTranslation();
@@ -122,8 +140,12 @@ export function Navbar() {
             <Link href="/categories" className="nav-link">{t('categories')}</Link>
             <Link href="/library" className="nav-link">{t('games')}</Link>
             <Link href="/community" className="nav-link">{t('community')}</Link>
+            <Link href="/todo-list" className="nav-link">{t('todo_list', '待玩清单')}</Link>
           </div>
           <div className="flex items-center space-x-3 ml-6">
+            <Link href="/todo-list" className="relative group flex-shrink-0">
+              <TodoListIcon className="h-6 w-6 text-gray-500 group-hover:text-blue-600 transition-colors" />
+            </Link>
             <Link href="/cart" className="relative group flex-shrink-0 ml-2 md:ml-0">
               <CartIcon className="h-6 w-6 text-gray-500 group-hover:text-blue-600 transition-colors" />
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">0</span>
@@ -173,7 +195,12 @@ export function Navbar() {
             <Link href="/categories" className="nav-link py-2" onClick={toggleMenu}>{t('categories')}</Link>
             <Link href="/library" className="nav-link py-2" onClick={toggleMenu}>{t('games')}</Link>
             <Link href="/community" className="nav-link py-2" onClick={toggleMenu}>{t('community')}</Link>
+            <Link href="/todo-list" className="nav-link py-2" onClick={toggleMenu}>{t('todo_list', '待玩清单')}</Link>
             <div className="flex items-center justify-between py-2">
+              <Link href="/todo-list" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
+                <TodoListIcon className="h-5 w-5" />
+                <span>{t('todo_list', '待玩清单')}</span>
+              </Link>
               <Link href="/cart" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
                 <CartIcon className="h-5 w-5" />
                 <span>{t('cart')}</span>

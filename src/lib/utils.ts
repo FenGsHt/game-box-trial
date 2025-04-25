@@ -1,12 +1,13 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+// 格式化游戏评分
+export const formatGameRating = (rating: number): string => {
+  return rating.toFixed(1)
 }
 
-// 格式化日期的辅助函数
-export function formatDate(date: Date): string {
+// 格式化日期
+export const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat("zh-CN", {
     year: "numeric",
     month: "long",
@@ -14,12 +15,18 @@ export function formatDate(date: Date): string {
   }).format(date)
 }
 
+// 合并className的工具函数
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 // 生成唯一ID的函数
 export function generateId(length: number = 8): string {
   return Math.random().toString(36).substring(2, 2 + length)
 }
 
-// 游戏评分格式化函数
-export function formatGameRating(rating: number): string {
-  return rating.toFixed(1)
+// 截断文本
+export const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + '...';
 }
