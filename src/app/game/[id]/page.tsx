@@ -1,9 +1,39 @@
+"use client"
 import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
 import { Metadata } from 'next'
+import { useTranslation } from 'react-i18next'
+
+// 创建一个矢量星星图标组件
+const StarIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    fill="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z" />
+  </svg>
+)
+
+// 创建一个矢量检查图标组件
+const CheckIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    viewBox="0 0 20 20" 
+    fill="currentColor"
+  >
+    <path 
+      fillRule="evenodd" 
+      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" 
+      clipRule="evenodd" 
+    />
+  </svg>
+)
 
 // 模拟游戏数据
 const gameDetails = {
@@ -91,6 +121,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default function GamePage({ params }: { params: { id: string } }): React.ReactNode {
+  const { t } = useTranslation();
+  
   // 实际项目中，应该根据 ID 从后端获取游戏数据
   const game = gameDetails;
   
@@ -121,7 +153,7 @@ export default function GamePage({ params }: { params: { id: string } }): React.
         <div className="container mx-auto px-4 relative h-full flex items-end pb-8">
           <div className="text-white">
             <h1 className="text-4xl md:text-5xl font-bold mb-2">{game.title}</h1>
-            <p className="text-lg opacity-90">由 {game.developer} 开发 · {game.publisher} 发行</p>
+            <p className="text-lg opacity-90">{t('game_developed_by', '由 {{developer}} 开发 · {{publisher}} 发行', { developer: game.developer, publisher: game.publisher })}</p>
           </div>
         </div>
       </div>
@@ -132,19 +164,19 @@ export default function GamePage({ params }: { params: { id: string } }): React.
           <div className="lg:col-span-2 space-y-8">
             {/* 游戏描述 */}
             <div>
-              <h2 className="text-2xl font-bold mb-4">游戏简介</h2>
+              <h2 className="text-2xl font-bold mb-4">{t('game_intro', '游戏简介')}</h2>
               <p className="text-gray-700 leading-relaxed">{game.description}</p>
             </div>
 
             {/* 游戏截图 */}
             <div>
-              <h2 className="text-2xl font-bold mb-4">游戏截图</h2>
+              <h2 className="text-2xl font-bold mb-4">{t('game_screenshots', '游戏截图')}</h2>
               <div className="grid grid-cols-2 gap-4">
                 {game.screenshots.map((screenshot, index) => (
                   <div key={index} className="relative aspect-video overflow-hidden rounded-lg">
                     <Image
                       src={screenshot}
-                      alt={`${game.title} 截图 ${index + 1}`}
+                      alt={t('game_screenshot_num', '{{title}} 截图 {{num}}', { title: game.title, num: index + 1 })}
                       fill
                       className="object-cover hover:scale-105 transition-transform duration-300"
                     />
@@ -155,26 +187,26 @@ export default function GamePage({ params }: { params: { id: string } }): React.
 
             {/* 系统需求 */}
             <div>
-              <h2 className="text-2xl font-bold mb-4">系统需求</h2>
+              <h2 className="text-2xl font-bold mb-4">{t('system_requirements', '系统需求')}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-lg mb-2">最低配置</h3>
+                  <h3 className="font-semibold text-lg mb-2">{t('minimum_spec', '最低配置')}</h3>
                   <ul className="space-y-2 text-gray-700">
-                    <li><span className="font-medium">操作系统：</span>{game.systemRequirements.minimum.os}</li>
-                    <li><span className="font-medium">处理器：</span>{game.systemRequirements.minimum.cpu}</li>
-                    <li><span className="font-medium">内存：</span>{game.systemRequirements.minimum.ram}</li>
-                    <li><span className="font-medium">显卡：</span>{game.systemRequirements.minimum.gpu}</li>
-                    <li><span className="font-medium">存储空间：</span>{game.systemRequirements.minimum.storage}</li>
+                    <li><span className="font-medium">{t('os', '操作系统')}：</span>{game.systemRequirements.minimum.os}</li>
+                    <li><span className="font-medium">{t('cpu', '处理器')}：</span>{game.systemRequirements.minimum.cpu}</li>
+                    <li><span className="font-medium">{t('ram', '内存')}：</span>{game.systemRequirements.minimum.ram}</li>
+                    <li><span className="font-medium">{t('gpu', '显卡')}：</span>{game.systemRequirements.minimum.gpu}</li>
+                    <li><span className="font-medium">{t('storage', '存储空间')}：</span>{game.systemRequirements.minimum.storage}</li>
                   </ul>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-lg mb-2">推荐配置</h3>
+                  <h3 className="font-semibold text-lg mb-2">{t('recommended_spec', '推荐配置')}</h3>
                   <ul className="space-y-2 text-gray-700">
-                    <li><span className="font-medium">操作系统：</span>{game.systemRequirements.recommended.os}</li>
-                    <li><span className="font-medium">处理器：</span>{game.systemRequirements.recommended.cpu}</li>
-                    <li><span className="font-medium">内存：</span>{game.systemRequirements.recommended.ram}</li>
-                    <li><span className="font-medium">显卡：</span>{game.systemRequirements.recommended.gpu}</li>
-                    <li><span className="font-medium">存储空间：</span>{game.systemRequirements.recommended.storage}</li>
+                    <li><span className="font-medium">{t('os', '操作系统')}：</span>{game.systemRequirements.recommended.os}</li>
+                    <li><span className="font-medium">{t('cpu', '处理器')}：</span>{game.systemRequirements.recommended.cpu}</li>
+                    <li><span className="font-medium">{t('ram', '内存')}：</span>{game.systemRequirements.recommended.ram}</li>
+                    <li><span className="font-medium">{t('gpu', '显卡')}：</span>{game.systemRequirements.recommended.gpu}</li>
+                    <li><span className="font-medium">{t('storage', '存储空间')}：</span>{game.systemRequirements.recommended.storage}</li>
                   </ul>
                 </div>
               </div>
@@ -183,9 +215,9 @@ export default function GamePage({ params }: { params: { id: string } }): React.
             {/* 评论 */}
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">用户评论</h2>
+                <h2 className="text-2xl font-bold">{t('user_reviews', '用户评论')}</h2>
                 <Button variant="outline" asChild>
-                  <Link href={`/game/${game.id}/reviews`}>查看全部</Link>
+                  <Link href={`/game/${game.id}/reviews`}>{t('view_all', '查看全部')}</Link>
                 </Button>
               </div>
               <div className="space-y-6">
@@ -203,14 +235,7 @@ export default function GamePage({ params }: { params: { id: string } }): React.
                         <div className="flex items-center mb-1">
                           <span className="font-medium mr-2">{review.user.name}</span>
                           <div className="flex items-center bg-blue-100 px-2 py-0.5 rounded text-xs">
-                            <svg 
-                              xmlns="http://www.w3.org/2000/svg" 
-                              className="h-3 w-3 text-yellow-500 mr-1" 
-                              fill="currentColor" 
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z" />
-                            </svg>
+                            <StarIcon className="h-3 w-3 text-yellow-500 mr-1" />
                             <span>{review.rating}.0</span>
                           </div>
                           <span className="text-gray-500 text-xs ml-2">{review.date}</span>
@@ -253,39 +278,32 @@ export default function GamePage({ params }: { params: { id: string } }): React.
                     )}
                   </div>
                   <div className="flex items-center bg-blue-100 px-2 py-1 rounded">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-4 w-4 text-yellow-500 mr-1" 
-                      fill="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.2z" />
-                    </svg>
+                    <StarIcon className="h-4 w-4 text-yellow-500 mr-1" />
                     <span className="text-sm font-medium">{game.rating}</span>
                   </div>
                 </div>
-                <Button className="w-full mb-2">加入购物车</Button>
-                <Button variant="outline" className="w-full">添加到愿望清单</Button>
+                <Button className="w-full mb-2">{t('add_to_cart', '加入购物车')}</Button>
+                <Button variant="outline" className="w-full">{t('add_to_wishlist', '添加到愿望清单')}</Button>
               </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
-              <h3 className="font-semibold text-lg">游戏信息</h3>
+              <h3 className="font-semibold text-lg">{t('game_info', '游戏信息')}</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">发行日期：</span>
+                  <span className="text-gray-600">{t('release_date', '发行日期')}：</span>
                   <span>{formatDate(new Date(game.releaseDate))}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">开发商：</span>
+                  <span className="text-gray-600">{t('developer', '开发商')}：</span>
                   <span>{game.developer}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">发行商：</span>
+                  <span className="text-gray-600">{t('publisher', '发行商')}：</span>
                   <span>{game.publisher}</span>
                 </div>
                 <div>
-                  <span className="text-gray-600 block mb-2">平台：</span>
+                  <span className="text-gray-600 block mb-2">{t('platform', '平台')}：</span>
                   <div className="flex space-x-2">
                     {game.platform.map((p) => (
                       <span key={p} className="bg-gray-100 rounded-full px-3 py-1 text-sm">
@@ -298,7 +316,7 @@ export default function GamePage({ params }: { params: { id: string } }): React.
             </div>
 
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="font-semibold text-lg mb-3">游戏标签</h3>
+              <h3 className="font-semibold text-lg mb-3">{t('game_tags', '游戏标签')}</h3>
               <div className="flex flex-wrap gap-2">
                 {game.tags.map((tag) => (
                   <Link 
@@ -313,22 +331,11 @@ export default function GamePage({ params }: { params: { id: string } }): React.
             </div>
 
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="font-semibold text-lg mb-3">游戏功能</h3>
+              <h3 className="font-semibold text-lg mb-3">{t('game_features', '游戏功能')}</h3>
               <div className="space-y-2">
                 {game.features.map((feature) => (
                   <div key={feature} className="flex items-center">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-5 w-5 text-green-500 mr-2" 
-                      viewBox="0 0 20 20" 
-                      fill="currentColor"
-                    >
-                      <path 
-                        fillRule="evenodd" 
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" 
-                        clipRule="evenodd" 
-                      />
-                    </svg>
+                    <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
                     <span>{feature}</span>
                   </div>
                 ))}

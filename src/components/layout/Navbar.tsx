@@ -1,16 +1,84 @@
 "use client"
 import Link from 'next/link'
-import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { getProfile } from '@/lib/profileApi'
 
+interface IconProps {
+  className?: string;
+}
+
+// 矢量图标组件
+const CartIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" 
+    />
+  </svg>
+)
+
+const MenuIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M4 6h16M4 12h16M4 18h16" 
+    />
+  </svg>
+)
+
+const CloseIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M6 18L18 6M6 6l12 12" 
+    />
+  </svg>
+)
+
+// 游戏盒子Logo图标
+const GameBoxLogo = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    viewBox="0 0 24 24" 
+    fill="currentColor"
+  >
+    <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 10H3V8h18v8zM6 15h2v-2h2v-2H8V9H6v2H4v2h2z"/>
+    <path d="M16 15h2v-2h2v-2h-2V9h-2v2h-2v2h2z"/>
+  </svg>
+)
+
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { t, i18n } = useTranslation();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{email?: string} | null>(null);
   const [profile, setProfile] = useState<{ username?: string } | null>(null);
 
   useEffect(() => {
@@ -40,13 +108,8 @@ export function Navbar() {
     <nav className="bg-white/90 backdrop-blur shadow-sm py-3 fixed w-full top-0 z-50 border-b border-gray-100">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link href="/" className="flex items-center space-x-1 group flex-shrink-0">
-          <div className="relative w-9 h-9">
-            <Image 
-              src="/logo.svg" 
-              alt={t('home')}
-              fill
-              className="object-contain group-hover:scale-110 transition-transform"
-            />
+          <div className="relative w-9 h-9 flex items-center justify-center">
+            <GameBoxLogo className="w-8 h-8 text-blue-600 group-hover:scale-110 transition-transform" />
           </div>
           <span className="text-2xl font-extrabold text-blue-600 tracking-tight group-hover:text-blue-700 transition-colors select-none">GameBox</span>
         </Link>
@@ -62,20 +125,7 @@ export function Navbar() {
           </div>
           <div className="flex items-center space-x-3 ml-6">
             <Link href="/cart" className="relative group flex-shrink-0 ml-2 md:ml-0">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-6 w-6 text-gray-500 group-hover:text-blue-600 transition-colors"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" 
-                />
-              </svg>
+              <CartIcon className="h-6 w-6 text-gray-500 group-hover:text-blue-600 transition-colors" />
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">0</span>
             </Link>
             {!user ? (
@@ -88,7 +138,7 @@ export function Navbar() {
                   {profile?.username ? `${profile.username}（${user.email}）` : user.email}
                 </span>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/profile">个人中心</Link>
+                  <Link href="/profile">{t('profile_center', '个人中心')}</Link>
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleLogout}>{t('logout')}</Button>
               </div>
@@ -106,29 +156,11 @@ export function Navbar() {
           className="md:hidden text-gray-600 ml-2"
           onClick={toggleMenu}
         >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-7 w-7" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            {isMenuOpen ? (
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M6 18L18 6M6 6l12 12" 
-              />
-            ) : (
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M4 6h16M4 12h16M4 18h16" 
-              />
-            )}
-          </svg>
+          {isMenuOpen ? (
+            <CloseIcon className="h-7 w-7" />
+          ) : (
+            <MenuIcon className="h-7 w-7" />
+          )}
         </button>
       </div>
 
@@ -143,20 +175,7 @@ export function Navbar() {
             <Link href="/community" className="nav-link py-2" onClick={toggleMenu}>{t('community')}</Link>
             <div className="flex items-center justify-between py-2">
               <Link href="/cart" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" 
-                  />
-                </svg>
+                <CartIcon className="h-5 w-5" />
                 <span>{t('cart')}</span>
               </Link>
               {!user ? (
@@ -169,7 +188,7 @@ export function Navbar() {
                     {profile?.username ? `${profile.username}(${user.email})` : user.email}
                   </span>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/profile">个人中心</Link>
+                    <Link href="/profile">{t('profile_center', '个人中心')}</Link>
                   </Button>
                   <Button variant="outline" size="sm" onClick={handleLogout}>{t('logout')}</Button>
                 </div>

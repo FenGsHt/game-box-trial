@@ -3,6 +3,24 @@ import { GameCard } from "@/components/game/GameCard";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
 
+// 搜索图标矢量组件
+const SearchIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+    />
+  </svg>
+)
+
 // 模拟游戏数据
 const allGames = [
   {
@@ -177,20 +195,7 @@ export default function StorePage() {
                 placeholder={t('search_games', '搜索游戏...')} 
                 className="rounded-md border border-gray-300 pl-10 pr-3 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
-                />
-              </svg>
+              <SearchIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
             </div>
           </div>
         </div>
@@ -222,18 +227,18 @@ export default function StorePage() {
       
       {/* 订阅区域 */}
       <div className="mt-16 bg-blue-50 rounded-xl p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">不错过任何游戏优惠</h2>
+        <h2 className="text-2xl font-bold mb-4">{t('subscription_title', '不错过任何游戏优惠')}</h2>
         <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-          订阅我们的通讯，获取独家折扣、新游戏发布通知和个性化推荐。
+          {t('subscription_desc', '订阅我们的通讯，获取独家折扣、新游戏发布通知和个性化推荐。')}
         </p>
         <div className="flex flex-col sm:flex-row justify-center max-w-md mx-auto">
           <input
             type="email"
-            placeholder="您的邮箱地址"
+            placeholder={t('your_email', '您的邮箱地址')}
             className="px-4 py-3 rounded-l-md sm:rounded-r-none mb-2 sm:mb-0 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <Button size="lg" className="sm:rounded-l-none">
-            订阅
+            {t('subscribe', '订阅')}
           </Button>
         </div>
       </div>
