@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Providers } from "./providers";
 import { appWithTranslation } from 'next-i18next';
 import './i18n';
+import { Chat } from "@/components/chat/Chat";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +21,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
               {children}
             </main>
             <Footer />
+            <Chat />
           </div>
         </Providers>
       </body>
@@ -27,4 +29,5 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+// @ts-expect-error - Next.js wrapper type issue
 export default appWithTranslation(ClientLayout); 
