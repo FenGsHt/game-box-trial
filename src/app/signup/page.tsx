@@ -21,6 +21,18 @@ export default function SignupPage() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin, // 登录后回到首页
+      }
+    });
+    if (error) {
+      alert(error.message);
+    }
+  };
+
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
       <h1 className="text-2xl font-bold mb-4">注册账号</h1>
@@ -46,6 +58,9 @@ export default function SignupPage() {
           注册
         </button>
       </form>
+      <button onClick={handleGoogleLogin} className="w-full bg-red-500 text-white py-2 rounded mt-4">
+        使用 Google 登录
+      </button>
     </div>
   );
 } 
