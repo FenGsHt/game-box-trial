@@ -6,14 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
+import { GameGroup, getUserCreatedGroups, getUserJoinedGroups } from '@/lib/gameGroupApi'
 
 // 待玩游戏项类型
 export interface GameTodo {
   id: string
   title: string
   is_completed: boolean
-  user_id: string
   rating?: number  // 游戏评分，1-5分，支持半星
+  user_id: string
+  group_id?: string // 所属游戏组ID
   created_at: string
 }
 
@@ -184,6 +186,10 @@ export function GameTodoList() {
   const [newTodo, setNewTodo] = useState('')
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ id?: string } | null>(null)
+  const [selectedGroup, setSelectedGroup] = useState<GameGroup | null>(null)
+  const [userGroups, setUserGroups] = useState<GameGroup[]>([])
+  const [joinedGroups, setJoinedGroups] = useState<GameGroup[]>([])
+  const [loadingGroups, setLoadingGroups] = useState(false)
 
   // 获取用户信息
   useEffect(() => {
@@ -198,6 +204,34 @@ export function GameTodoList() {
     }
   }, [])
 
+  // 加载用户的游戏组
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const loadGroups = async () => {
+      setLoadingGroups(true);
+      try {
+        // 获取用户创建的组
+        const { data: createdGroups } = await getUserCreatedGroups();
+        if (createdGroups) {
+          setUserGroups(createdGroups);
+        }
+
+        // 获取用户加入的组
+        const { data: joined } = await getUserJoinedGroups();
+        if (joined) {
+          setJoinedGroups(joined as unknown as GameGroup[]);
+        }
+      } catch (error) {
+        console.error("加载游戏组失败:", error);
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+
+    loadGroups();
+  }, [user?.id]);
+
   // 加载待玩游戏列表
   useEffect(() => {
     if (!user?.id) {
@@ -208,11 +242,20 @@ export function GameTodoList() {
     const fetchTodos = async () => {
       try {
         setLoading(true)
-        const { data, error } = await supabase
+        let query = supabase
           .from('game_todos')
           .select('*')
-          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
+        
+        if (selectedGroup) {
+          // 如果选择了组，则筛选该组的待玩游戏
+          query = query.eq('group_id', selectedGroup.id)
+        } else {
+          // 否则只显示用户自己的非组待玩游戏
+          query = query.eq('user_id', user.id).is('group_id', null)
+        }
+        
+        const { data, error } = await query
         
         if (error) {
           console.error('获取待玩游戏列表失败:', error)
@@ -237,11 +280,18 @@ export function GameTodoList() {
           event: '*', 
           schema: 'public', 
           table: 'game_todos',
-          filter: `user_id=eq.${user.id}`
+          filter: selectedGroup
+            ? `group_id=eq.${selectedGroup.id}`
+            : `user_id=eq.${user.id}`
         }, 
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setTodos(current => [payload.new as GameTodo, ...current])
+            const newTodo = payload.new as GameTodo;
+            // 只有当新添加的待办事项符合当前筛选条件时才添加
+            if ((selectedGroup && newTodo.group_id === selectedGroup.id) || 
+                (!selectedGroup && newTodo.user_id === user.id && !newTodo.group_id)) {
+              setTodos(current => [newTodo, ...current]);
+            }
           } else if (payload.eventType === 'UPDATE') {
             setTodos(current => 
               current.map(todo => 
@@ -260,7 +310,7 @@ export function GameTodoList() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [user?.id])
+  }, [user?.id, selectedGroup]);
 
   // 添加待玩游戏
   const addTodo = async (e: React.FormEvent) => {
@@ -273,7 +323,8 @@ export function GameTodoList() {
         title: newTodo.trim(),
         is_completed: false,
         rating: 0, // 默认评分为0
-        user_id: user.id
+        user_id: user.id,
+        group_id: selectedGroup?.id || null // 添加到当前选择的组
       }
       
       const { error } = await supabase
@@ -342,6 +393,51 @@ export function GameTodoList() {
     }
   }
 
+  // 渲染游戏组选择器
+  const renderGroupSelector = () => {
+    if (loadingGroups) {
+      return <div className="text-sm text-gray-500">{t('loading', '加载中...')}</div>;
+    }
+
+    const allGroups = [...userGroups, ...joinedGroups];
+    
+    if (allGroups.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mb-6">
+        <h3 className="text-sm font-medium text-gray-500 mb-2">{t('select_group', '选择游戏组')}</h3>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSelectedGroup(null)}
+            className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+              selectedGroup === null 
+                ? 'bg-blue-100 border-blue-300 text-blue-800' 
+                : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            {t('personal_todos', '个人清单')}
+          </button>
+          
+          {allGroups.map(group => (
+            <button
+              key={group.id}
+              onClick={() => setSelectedGroup(group)}
+              className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                selectedGroup?.id === group.id
+                  ? 'bg-blue-100 border-blue-300 text-blue-800' 
+                  : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              {group.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   if (!user) {
     return (
       <div className="text-center py-8">
@@ -370,6 +466,8 @@ export function GameTodoList() {
         </Button>
       </form>
       
+      {renderGroupSelector()}
+      
       {loading ? (
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -392,9 +490,14 @@ export function GameTodoList() {
                   />
                   <label 
                     htmlFor={`todo-${todo.id}`}
-                    className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium`}
+                    className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium flex items-center gap-2`}
                   >
                     {todo.title}
+                    {todo.group_id && selectedGroup && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        {selectedGroup.name}
+                      </span>
+                    )}
                   </label>
                 </div>
                 <button 

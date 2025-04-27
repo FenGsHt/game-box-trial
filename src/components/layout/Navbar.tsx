@@ -141,6 +141,7 @@ export function Navbar() {
             <Link href="/library" className="nav-link">{t('games')}</Link>
             <Link href="/community" className="nav-link">{t('community')}</Link>
             <Link href="/todo-list" className="nav-link">{t('todo_list', '待玩清单')}</Link>
+            <Link href="/group-manager" className="nav-link">{t('group_manager', '游戏组')}</Link>
           </div>
           <div className="flex items-center space-x-3 ml-6">
             <Link href="/todo-list" className="relative group flex-shrink-0">
@@ -196,6 +197,7 @@ export function Navbar() {
             <Link href="/library" className="nav-link py-2" onClick={toggleMenu}>{t('games')}</Link>
             <Link href="/community" className="nav-link py-2" onClick={toggleMenu}>{t('community')}</Link>
             <Link href="/todo-list" className="nav-link py-2" onClick={toggleMenu}>{t('todo_list', '待玩清单')}</Link>
+            <Link href="/group-manager" className="nav-link py-2" onClick={toggleMenu}>{t('group_manager', '游戏组')}</Link>
             <div className="flex items-center justify-between py-2">
               <Link href="/todo-list" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
                 <TodoListIcon className="h-5 w-5" />
