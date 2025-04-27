@@ -23,19 +23,19 @@ export async function createGameGroup(name: string, description?: string) {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) return { error: { message: '用户未登录' } };
 
-  const { data, error } = await supabase
-    .from('game_groups')
-    .insert([
-      {
-        name,
-        description,
-        leader_id: user.user.id,
-      }
-    ])
-    .select()
-    .single();
+  // 使用事务确保创建组和添加成员的操作一起成功或失败
+  const { data, error } = await supabase.rpc('create_game_group_with_leader', {
+    p_name: name,
+    p_description: description || null,
+    p_leader_id: user.user.id
+  });
 
-  return { data, error };
+  if (error) {
+    console.error('创建游戏组失败:', error);
+    return { error };
+  }
+
+  return { data, error: null };
 }
 
 // 获取用户创建的游戏组
@@ -66,7 +66,7 @@ export async function getUserJoinedGroups() {
     .eq('user_id', user.user.id);
 
   // 重新格式化数据
-  const groups = data?.map(item => item.game_groups) || [];
+  const groups = data?.map(item => item.group_id) || [];
   
   return { data: groups, error };
 }

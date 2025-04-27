@@ -277,36 +277,44 @@ export function GameTodoList() {
       setLoadingGroups(true);
       try {
         // 获取用户创建的组
-        const { data: createdGroups } = await getUserCreatedGroups();
-        if (createdGroups) {
-          setUserGroups(createdGroups);
+        const { data: createdGroups, error: createdError } = await getUserCreatedGroups();
+        if (createdError) {
+          console.error("获取创建的组失败:", createdError);
         }
+        
+        // 确保createdGroups是数组
+        const safeCreatedGroups = Array.isArray(createdGroups) ? createdGroups : [];
+        setUserGroups(safeCreatedGroups);
 
         // 获取用户加入的组
-        const { data: joined } = await getUserJoinedGroups();
-        if (joined) {
-          setJoinedGroups(joined as unknown as GameGroup[]);
+        const { data: joined, error: joinedError } = await getUserJoinedGroups();
+        if (joinedError) {
+          console.error("获取加入的组失败:", joinedError);
         }
+        
+        // 确保joined是数组并转换类型
+        const safeJoinedGroups = Array.isArray(joined) ? joined as unknown as GameGroup[] : [];
+        setJoinedGroups(safeJoinedGroups);
 
         // 获取URL中的组ID参数
         const urlParams = new URLSearchParams(window.location.search);
         const groupIdParam = urlParams.get('groupId');
         
+        // 合并所有组，确保过滤掉null或undefined
+        const allGroups = [...safeCreatedGroups, ...safeJoinedGroups].filter(Boolean);
+        
         // 如果URL中有组ID，并且用户属于该组，则选择该组
         if (groupIdParam) {
-          const allGroups = [...(createdGroups || []), ...(joined as unknown as GameGroup[] || [])];
-          const selectedGroupFromUrl = allGroups.find(g => g.id === groupIdParam);
+          const selectedGroupFromUrl = allGroups.find(g => g && g.id === groupIdParam);
           if (selectedGroupFromUrl) {
             setSelectedGroup(selectedGroupFromUrl);
+          } else {
+            console.warn(`未找到ID为 ${groupIdParam} 的组`);
           }
         } 
         // 如果没有URL参数但用户有组，默认选择第一个组（优先选择创建的组）
-        else if ((createdGroups && createdGroups.length > 0) || (joined && (joined as unknown as GameGroup[]).length > 0)) {
-          if (createdGroups && createdGroups.length > 0) {
-            setSelectedGroup(createdGroups[0]);
-          } else if (joined && (joined as unknown as GameGroup[]).length > 0) {
-            setSelectedGroup((joined as unknown as GameGroup[])[0]);
-          }
+        else if (allGroups.length > 0) {
+          setSelectedGroup(allGroups[0]);
         }
       } catch (error) {
         console.error("加载游戏组失败:", error);
@@ -557,13 +565,13 @@ export function GameTodoList() {
         }
         
         // 如果用户不存在，创建用户profile
-        if (!data) {
+        if (!data && user.id && user.email) { // 额外检查确保user.id和user.email存在
           const { error: insertError } = await supabase
             .from('users')
             .insert([{
               id: user.id,
               email: user.email,
-              username: user.email.split('@')[0] // 默认使用邮箱前缀作为用户名
+              username: user.email.split('@')[0] || 'user' // 默认使用邮箱前缀作为用户名
             }]);
           
           if (insertError) {
@@ -763,7 +771,7 @@ export function GameTodoList() {
       return <div className="text-sm text-gray-500">加载中...</div>;
     }
 
-    const allGroups = [...userGroups, ...joinedGroups];
+    const allGroups = [...userGroups, ...joinedGroups].filter(group => group && group.id);
     
     if (allGroups.length === 0) {
       return null;
@@ -790,7 +798,7 @@ export function GameTodoList() {
             个人清单
           </button>
           
-          {allGroups.map(group => (
+          {allGroups.map(group => group && (
             <button
               key={group.id}
               onClick={() => {
@@ -806,7 +814,7 @@ export function GameTodoList() {
                   : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'
               }`}
             >
-              {group.name}
+              {group.name || '未命名组'}
             </button>
           ))}
         </div>
