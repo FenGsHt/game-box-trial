@@ -55,20 +55,31 @@ export async function getUserCreatedGroups() {
 // 获取用户加入的游戏组
 export async function getUserJoinedGroups() {
   const { data: user } = await supabase.auth.getUser();
-  if (!user.user) return { data: [], error: null };
+  if (!user?.user) return { data: [], error: null };
 
-  const { data, error } = await supabase
+  // 先查出用户加入的所有 group_id
+  const { data: memberRows, error: memberError } = await supabase
     .from('game_group_members')
-    .select(`
-      group_id,
-      game_groups (*)
-    `)
+    .select('group_id')
     .eq('user_id', user.user.id);
 
-  // 重新格式化数据
-  const groups = data?.map(item => item.group_id) || [];
-  
-  return { data: groups, error };
+  if (memberError) {
+    return { data: [], error: memberError };
+  }
+
+  const groupIds = (memberRows || []).map(row => row.group_id);
+
+  if (!groupIds.length) {
+    return { data: [], error: null };
+  }
+
+  // 再根据 group_id 查询 game_groups 表
+  const { data: groups, error: groupError } = await supabase
+    .from('game_groups')
+    .select('*')
+    .in('id', groupIds);
+
+  return { data: groups || [], error: groupError };
 }
 
 // 获取游戏组详情

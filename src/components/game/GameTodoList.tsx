@@ -680,7 +680,6 @@ export function GameTodoList() {
         .from('game_todos')
         .update({ is_completed: !isCompleted })
         .eq('id', id)
-        .eq('user_id', user?.id)
       
       if (error) {
         console.error('更新待玩游戏状态失败:', error)
@@ -697,7 +696,6 @@ export function GameTodoList() {
         .from('game_todos')
         .update({ rating })
         .eq('id', id)
-        .eq('user_id', user?.id)
       
       if (error) {
         console.error('更新游戏评分失败:', error)
@@ -714,7 +712,6 @@ export function GameTodoList() {
         .from('game_todos')
         .delete()
         .eq('id', id)
-        .eq('user_id', user?.id)
       
       if (error) {
         console.error('删除待玩游戏失败:', error)
@@ -737,7 +734,6 @@ export function GameTodoList() {
           price: priceValue 
         })
         .eq('id', id)
-        .eq('user_id', user?.id)
       
       if (error) {
         console.error('更新游戏信息失败:', error)
@@ -1119,7 +1115,7 @@ export function GameTodoList() {
 
   // 保存待玩游戏标签
   const saveTodoTags = async () => {
-    if (!editingTodoTags || !user?.id) return;
+    if (!editingTodoTags) return;
     
     try {
       const { error } = await supabase
