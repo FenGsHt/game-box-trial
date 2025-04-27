@@ -22,6 +22,17 @@ export interface GameTodo {
   price?: number // 游戏价格
 }
 
+// 游戏留言类型
+export interface GameComment {
+  id: string
+  game_todo_id: string
+  user_id: string
+  content: string
+  created_at: string
+  user_email?: string
+  user_username?: string
+}
+
 // 添加图标
 const PlusIcon = (props: { className?: string }) => (
   <svg 
@@ -206,7 +217,7 @@ export function GameTodoList() {
   const [todos, setTodos] = useState<GameTodo[]>([])
   const [newTodo, setNewTodo] = useState('')
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<{ id?: string } | null>(null)
+  const [user, setUser] = useState<{ id?: string, email?: string } | null>(null)
   const [selectedGroup, setSelectedGroup] = useState<GameGroup | null>(null)
   const [userGroups, setUserGroups] = useState<GameGroup[]>([])
   const [joinedGroups, setJoinedGroups] = useState<GameGroup[]>([])
@@ -221,6 +232,10 @@ export function GameTodoList() {
     note: '',
     price: '',
   })
+  const [comments, setComments] = useState<Record<string, GameComment[]>>({})
+  const [newComment, setNewComment] = useState('')
+  const [commentingTodo, setCommentingTodo] = useState<string | null>(null)
+  const [sortOrder, setSortOrder] = useState<'default' | 'rating'>('default')
 
   // 获取用户信息
   useEffect(() => {
@@ -276,7 +291,6 @@ export function GameTodoList() {
         let query = supabase
           .from('game_todos')
           .select('*')
-          .order('created_at', { ascending: false })
         
         if (selectedGroup) {
           // 如果选择了组，则筛选该组的待玩游戏
@@ -293,7 +307,22 @@ export function GameTodoList() {
           return
         }
         
-        setTodos(data || [])
+        // 根据排序方式排序结果
+        const sortedData = [...(data || [])]
+        if (sortOrder === 'rating') {
+          sortedData.sort((a, b) => {
+            const ratingA = a.rating || 0
+            const ratingB = b.rating || 0
+            return ratingB - ratingA // 从高到低排序
+          })
+        } else {
+          // 默认按创建时间排序
+          sortedData.sort((a, b) => {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          })
+        }
+        
+        setTodos(sortedData)
       } catch (error) {
         console.error('获取待玩游戏列表异常:', error)
       } finally {
@@ -341,7 +370,127 @@ export function GameTodoList() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [user?.id, selectedGroup]);
+  }, [user?.id, selectedGroup, sortOrder]);
+
+  // 加载游戏留言
+  useEffect(() => {
+    if (!user?.id || todos.length === 0) return;
+
+    const fetchComments = async () => {
+      try {
+        // 获取所有当前显示的游戏ID
+        const todoIds = todos.map(todo => todo.id);
+        
+        // 直接查询留言表，不使用关系查询
+        const { data, error } = await supabase
+          .from('game_comments')
+          .select(`
+            id,
+            game_todo_id,
+            user_id,
+            content,
+            created_at
+          `)
+          .in('game_todo_id', todoIds)
+          .order('created_at', { ascending: true });
+        
+        if (error) {
+          console.error('获取游戏留言失败:', error);
+          return;
+        }
+        
+        // 获取留言相关用户信息
+        if (data && data.length > 0) {
+          // 获取所有用户ID
+          const userIds = [...new Set(data.map(comment => comment.user_id))];
+          
+          // 查询这些用户的信息
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id, email, username')
+            .in('id', userIds);
+          
+          if (userError) {
+            console.error('获取用户信息失败:', userError);
+          }
+          
+          // 创建用户信息映射
+          const userMap: Record<string, { email?: string, username?: string }> = {};
+          if (userData) {
+            userData.forEach((user: { id: string, email?: string, username?: string }) => {
+              userMap[user.id] = { email: user.email, username: user.username };
+            });
+          }
+          
+          // 合并留言和用户信息
+          const enhancedComments = data.map((comment): GameComment => ({
+            ...comment,
+            user_email: userMap[comment.user_id]?.email,
+            user_username: userMap[comment.user_id]?.username
+          }));
+          
+          // 按游戏ID分组留言
+          const commentsByTodo: Record<string, GameComment[]> = {};
+          enhancedComments.forEach((comment: GameComment) => {
+            if (!commentsByTodo[comment.game_todo_id]) {
+              commentsByTodo[comment.game_todo_id] = [];
+            }
+            commentsByTodo[comment.game_todo_id].push(comment);
+          });
+          
+          setComments(commentsByTodo);
+        } else {
+          setComments({});
+        }
+      } catch (error) {
+        console.error('获取游戏留言异常:', error);
+      }
+    };
+
+    fetchComments();
+
+    // 设置实时订阅
+    const subscription = supabase
+      .channel('game_comments_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'game_comments'
+        }, 
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newComment = payload.new as GameComment;
+            // 为新留言获取用户信息
+            supabase
+              .from('users')
+              .select('email, username')
+              .eq('id', newComment.user_id)
+              .single()
+              .then(({ data: userData }) => {
+                if (userData) {
+                  newComment.user_email = userData.email;
+                  newComment.user_username = userData.username;
+                }
+                
+                setComments(current => {
+                  const updated = { ...current };
+                  if (!updated[newComment.game_todo_id]) {
+                    updated[newComment.game_todo_id] = [];
+                  }
+                  updated[newComment.game_todo_id] = [...updated[newComment.game_todo_id], newComment];
+                  return updated;
+                });
+              });
+          }
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [todos, user?.id]);
 
   // 添加待玩游戏
   const addTodo = async (e: React.FormEvent) => {
@@ -567,6 +716,120 @@ export function GameTodoList() {
     )
   }
 
+  // 添加留言
+  const addComment = async (todoId: string) => {
+    if (!newComment.trim() || !user?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('game_comments')
+        .insert([{
+          game_todo_id: todoId,
+          user_id: user.id,
+          content: newComment.trim()
+        }]);
+      
+      if (error) {
+        console.error('添加留言失败:', error);
+        return;
+      }
+      
+      // 清空输入并关闭留言框
+      setNewComment('');
+      setCommentingTodo(null);
+    } catch (error) {
+      console.error('添加留言异常:', error);
+    }
+  };
+
+  // 开始留言
+  const startCommenting = (todoId: string) => {
+    setCommentingTodo(todoId);
+    setNewComment('');
+  };
+
+  // 取消留言
+  const cancelCommenting = () => {
+    setCommentingTodo(null);
+    setNewComment('');
+  };
+
+  // 切换排序方式
+  const toggleSortOrder = () => {
+    setSortOrder(current => current === 'default' ? 'rating' : 'default');
+  };
+
+  // 渲染留言表单
+  const renderCommentForm = (todoId: string) => {
+    return (
+      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+        <textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder={t('comment_placeholder', '写下你的留言...')}
+          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          rows={2}
+        />
+        <div className="flex justify-end gap-2 mt-2">
+          <Button variant="outline" size="sm" onClick={cancelCommenting}>
+            {t('cancel', '取消')}
+          </Button>
+          <Button size="sm" onClick={() => addComment(todoId)} disabled={!newComment.trim()}>
+            {t('add_comment', '添加留言')}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // 渲染留言列表
+  const renderComments = (todoId: string) => {
+    const todoComments = comments[todoId] || [];
+    
+    if (todoComments.length === 0 && commentingTodo !== todoId) {
+      return (
+        <button
+          onClick={() => startCommenting(todoId)}
+          className="text-sm text-blue-600 hover:text-blue-800 mt-2"
+        >
+          {t('add_first_comment', '添加第一条留言')}
+        </button>
+      );
+    }
+    
+    return (
+      <div className="mt-2">
+        {todoComments.length > 0 && (
+          <div className="space-y-2 mb-2">
+            <h4 className="text-sm font-medium text-gray-700">{t('comments', '留言')}</h4>
+            {todoComments.map(comment => (
+              <div key={comment.id} className="text-sm bg-gray-50 p-2 rounded-md">
+                <div className="font-medium text-blue-700">
+                  {comment.user_username || comment.user_email?.split('@')[0] || '用户'}:
+                </div>
+                <div className="mt-1 text-gray-700">{comment.content}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {new Date(comment.created_at).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {commentingTodo === todoId ? (
+          renderCommentForm(todoId)
+        ) : (
+          <button
+            onClick={() => startCommenting(todoId)}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            {t('add_comment', '添加留言')}
+          </button>
+        )}
+      </div>
+    );
+  };
+
   if (!user) {
     return (
       <div className="text-center py-8">
@@ -596,6 +859,20 @@ export function GameTodoList() {
       </form>
       
       {renderGroupSelector()}
+      
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-gray-700">{t('sort_by', '排序方式')}</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleSortOrder}
+          className="text-sm"
+        >
+          {sortOrder === 'rating'
+            ? t('sort_by_date', '按添加时间排序')
+            : t('sort_by_rating', '按评分排序')}
+        </Button>
+      </div>
       
       {loading ? (
         <div className="flex justify-center py-8">
@@ -666,34 +943,40 @@ export function GameTodoList() {
               
               {todo.note && editingTodo !== todo.id && (
                 <div className="ml-7 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
-                  {todo.note}
+                  <span className="font-medium">游戏备注: </span>{todo.note}
                 </div>
               )}
               
               {editingTodo === todo.id ? (
                 renderEditForm(todo)
               ) : (
-                <div className="ml-7 mt-3">
-                  <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors p-3 rounded-lg shadow-sm">
-                    <span className="text-sm font-medium text-gray-600 mr-3">{t('rating', '评分')}:</span>
-                    <div className="flex-grow">
-                      <RatingStars 
-                        rating={todo.rating} 
-                        onChange={(newRating) => updateRating(todo.id, newRating)}
-                        size="md"
-                      />
+                <>
+                  <div className="ml-7 mt-3">
+                    <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors p-3 rounded-lg shadow-sm">
+                      <span className="text-sm font-medium text-gray-600 mr-3">{t('rating', '评分')}:</span>
+                      <div className="flex-grow">
+                        <RatingStars 
+                          rating={todo.rating} 
+                          onChange={(newRating) => updateRating(todo.id, newRating)}
+                          size="md"
+                        />
+                      </div>
+                      {todo.rating ? (
+                        <span className="ml-2 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                          {todo.rating}
+                        </span>
+                      ) : (
+                        <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+                          {t('not_rated', '未评分')}
+                        </span>
+                      )}
                     </div>
-                    {todo.rating ? (
-                      <span className="ml-2 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                        {todo.rating}
-                      </span>
-                    ) : (
-                      <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
-                        {t('not_rated', '未评分')}
-                      </span>
-                    )}
                   </div>
-                </div>
+                  
+                  <div className="ml-7 mt-2">
+                    {renderComments(todo.id)}
+                  </div>
+                </>
               )}
             </li>
           ))}
