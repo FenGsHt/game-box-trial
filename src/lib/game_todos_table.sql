@@ -153,3 +153,9 @@ CREATE INDEX idx_game_todos_created_at ON game_todos(created_at);
 CREATE INDEX idx_game_groups_leader_id ON game_groups(leader_id);
 CREATE INDEX idx_game_group_members_group_id ON game_group_members(group_id);
 CREATE INDEX idx_game_group_members_user_id ON game_group_members(user_id); 
+
+
+ALTER TABLE game_todos 
+ADD COLUMN link TEXT NULL,
+ADD COLUMN note TEXT NULL,
+ADD COLUMN price NUMERIC NULL;

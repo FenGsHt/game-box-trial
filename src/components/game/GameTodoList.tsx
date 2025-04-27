@@ -17,6 +17,9 @@ export interface GameTodo {
   user_id: string
   group_id?: string // 所属游戏组ID
   created_at: string
+  link?: string // 游戏链接
+  note?: string // 游戏留言
+  price?: number // 游戏价格
 }
 
 // 添加图标
@@ -180,6 +183,24 @@ const RatingStars = ({
   );
 };
 
+// 添加编辑图标
+const EditIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
+    />
+  </svg>
+)
+
 export function GameTodoList() {
   const { t } = useTranslation()
   const [todos, setTodos] = useState<GameTodo[]>([])
@@ -190,6 +211,16 @@ export function GameTodoList() {
   const [userGroups, setUserGroups] = useState<GameGroup[]>([])
   const [joinedGroups, setJoinedGroups] = useState<GameGroup[]>([])
   const [loadingGroups, setLoadingGroups] = useState(false)
+  const [editingTodo, setEditingTodo] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<{
+    link: string;
+    note: string;
+    price: string;
+  }>({
+    link: '',
+    note: '',
+    price: '',
+  })
 
   // 获取用户信息
   useEffect(() => {
@@ -393,6 +424,47 @@ export function GameTodoList() {
     }
   }
 
+  // 更新游戏信息
+  const updateTodoDetails = async (id: string) => {
+    try {
+      const priceValue = editForm.price ? parseFloat(editForm.price) : undefined;
+      
+      const { error } = await supabase
+        .from('game_todos')
+        .update({ 
+          link: editForm.link || null,
+          note: editForm.note || null,
+          price: priceValue 
+        })
+        .eq('id', id)
+        .eq('user_id', user?.id)
+      
+      if (error) {
+        console.error('更新游戏信息失败:', error)
+      } else {
+        // 成功后关闭编辑模式
+        setEditingTodo(null)
+      }
+    } catch (error) {
+      console.error('更新游戏信息异常:', error)
+    }
+  }
+
+  // 开始编辑待玩游戏
+  const startEditing = (todo: GameTodo) => {
+    setEditingTodo(todo.id)
+    setEditForm({
+      link: todo.link || '',
+      note: todo.note || '',
+      price: todo.price?.toString() || '',
+    })
+  }
+
+  // 取消编辑
+  const cancelEditing = () => {
+    setEditingTodo(null)
+  }
+
   // 渲染游戏组选择器
   const renderGroupSelector = () => {
     if (loadingGroups) {
@@ -437,6 +509,63 @@ export function GameTodoList() {
       </div>
     );
   };
+
+  // 渲染编辑表单
+  const renderEditForm = (todo: GameTodo) => {
+    return (
+      <div className="mt-3 p-4 bg-gray-50 rounded-lg space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('game_link', '游戏链接')}
+          </label>
+          <Input
+            type="text"
+            value={editForm.link}
+            onChange={(e) => setEditForm({...editForm, link: e.target.value})}
+            placeholder={t('game_link_placeholder', '输入游戏链接...')}
+            className="w-full"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('game_note', '游戏留言')}
+          </label>
+          <textarea
+            value={editForm.note}
+            onChange={(e) => setEditForm({...editForm, note: e.target.value})}
+            placeholder={t('game_note_placeholder', '输入游戏留言...')}
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={3}
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('game_price', '游戏价格')}
+          </label>
+          <Input
+            type="number"
+            value={editForm.price}
+            onChange={(e) => setEditForm({...editForm, price: e.target.value})}
+            placeholder={t('game_price_placeholder', '输入游戏价格...')}
+            className="w-full"
+            step="0.01"
+            min="0"
+          />
+        </div>
+        
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline" onClick={cancelEditing}>
+            {t('cancel', '取消')}
+          </Button>
+          <Button onClick={() => updateTodoDetails(todo.id)}>
+            {t('save', '保存')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   if (!user) {
     return (
@@ -492,44 +621,80 @@ export function GameTodoList() {
                     htmlFor={`todo-${todo.id}`}
                     className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium flex items-center gap-2`}
                   >
-                    {todo.title}
+                    {todo.link ? (
+                      <a 
+                        href={todo.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {todo.title}
+                      </a>
+                    ) : (
+                      todo.title
+                    )}
                     {todo.group_id && selectedGroup && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                         {selectedGroup.name}
                       </span>
                     )}
+                    {todo.price && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                        ¥{todo.price.toFixed(2)}
+                      </span>
+                    )}
                   </label>
                 </div>
-                <button 
-                  onClick={() => deleteTodo(todo.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                  aria-label={t('todo_delete', '删除')}
-                >
-                  <TrashIcon className="h-5 w-5" />
-                </button>
-              </div>
-              
-              <div className="ml-7 mt-3">
-                <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors p-3 rounded-lg shadow-sm">
-                  <span className="text-sm font-medium text-gray-600 mr-3">{t('rating', '评分')}:</span>
-                  <div className="flex-grow">
-                    <RatingStars 
-                      rating={todo.rating} 
-                      onChange={(newRating) => updateRating(todo.id, newRating)}
-                      size="md"
-                    />
-                  </div>
-                  {todo.rating ? (
-                    <span className="ml-2 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                      {todo.rating}
-                    </span>
-                  ) : (
-                    <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
-                      {t('not_rated', '未评分')}
-                    </span>
-                  )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => startEditing(todo)}
+                    className="text-gray-400 hover:text-blue-500 transition-colors"
+                    aria-label={t('todo_edit', '编辑')}
+                  >
+                    <EditIcon className="h-5 w-5" />
+                  </button>
+                  <button 
+                    onClick={() => deleteTodo(todo.id)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    aria-label={t('todo_delete', '删除')}
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
+              
+              {todo.note && editingTodo !== todo.id && (
+                <div className="ml-7 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
+                  {todo.note}
+                </div>
+              )}
+              
+              {editingTodo === todo.id ? (
+                renderEditForm(todo)
+              ) : (
+                <div className="ml-7 mt-3">
+                  <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors p-3 rounded-lg shadow-sm">
+                    <span className="text-sm font-medium text-gray-600 mr-3">{t('rating', '评分')}:</span>
+                    <div className="flex-grow">
+                      <RatingStars 
+                        rating={todo.rating} 
+                        onChange={(newRating) => updateRating(todo.id, newRating)}
+                        size="md"
+                      />
+                    </div>
+                    {todo.rating ? (
+                      <span className="ml-2 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                        {todo.rating}
+                      </span>
+                    ) : (
+                      <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+                        {t('not_rated', '未评分')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>
