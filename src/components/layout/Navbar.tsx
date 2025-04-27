@@ -135,11 +135,11 @@ export function Navbar() {
         {/* 桌面导航 */}
         <div className="hidden md:flex items-center space-x-8">
           <div className="flex space-x-4">
-            <Link href="/" className="nav-link">{t('home')}</Link>
-            <Link href="/store" className="nav-link">{t('store')}</Link>
-            <Link href="/categories" className="nav-link">{t('categories')}</Link>
-            <Link href="/library" className="nav-link">{t('games')}</Link>
-            <Link href="/community" className="nav-link">{t('community')}</Link>
+            {/* <Link href="/" className="nav-link">{t('home')}</Link> */}
+            {/* <Link href="/store" className="nav-link">{t('store')}</Link> */}
+            {/* <Link href="/categories" className="nav-link">{t('categories')}</Link> */}
+            {/* <Link href="/library" className="nav-link">{t('games')}</Link> */}
+            {/* <Link href="/community" className="nav-link">{t('community')}</Link> */}
             <Link href="/todo-list" className="nav-link">{t('todo_list', '待玩清单')}</Link>
             <Link href="/group-manager" className="nav-link">{t('group_manager', '游戏组')}</Link>
           </div>
@@ -174,52 +174,65 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* 移动端菜单按钮 */}
-        <button 
-          className="md:hidden text-gray-600 ml-2"
-          onClick={toggleMenu}
-        >
-          {isMenuOpen ? (
-            <CloseIcon className="h-7 w-7" />
+        {/* 移动端登录按钮和菜单按钮同一行 */}
+        <div className="flex items-center md:hidden space-x-2">
+          {!user ? (
+            <Button variant="default" size="sm" asChild>
+              <Link href="/signin">{t('login')}/{t('register')}</Link>
+            </Button>
           ) : (
-            <MenuIcon className="h-7 w-7" />
+            <span className="text-gray-700 text-sm font-medium">
+              {profile?.username ? `${profile.username}（${user.email}）` : user.email}
+            </span>
           )}
-        </button>
+          <button 
+            className="text-gray-600 ml-2"
+            onClick={toggleMenu}
+          >
+            {isMenuOpen ? (
+              <CloseIcon className="h-7 w-7" />
+            ) : (
+              <MenuIcon className="h-7 w-7" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* 移动端菜单 */}
       {isMenuOpen && (
         <div className="md:hidden px-4 py-4 bg-white border-t">
           <div className="flex flex-col space-y-4">
-            <Link href="/" className="nav-link py-2" onClick={toggleMenu}>{t('home')}</Link>
-            <Link href="/store" className="nav-link py-2" onClick={toggleMenu}>{t('store')}</Link>
-            <Link href="/categories" className="nav-link py-2" onClick={toggleMenu}>{t('categories')}</Link>
-            <Link href="/library" className="nav-link py-2" onClick={toggleMenu}>{t('games')}</Link>
-            <Link href="/community" className="nav-link py-2" onClick={toggleMenu}>{t('community')}</Link>
+            {/* <Link href="/" className="nav-link py-2" onClick={toggleMenu}>{t('home')}</Link> */}
+            {/* <Link href="/store" className="nav-link py-2" onClick={toggleMenu}>{t('store')}</Link> */}
+            {/* <Link href="/categories" className="nav-link py-2" onClick={toggleMenu}>{t('categories')}</Link> */}
+            {/* <Link href="/library" className="nav-link py-2" onClick={toggleMenu}>{t('games')}</Link> */}
+            {/* <Link href="/community" className="nav-link py-2" onClick={toggleMenu}>{t('community')}</Link> */}
             <Link href="/todo-list" className="nav-link py-2" onClick={toggleMenu}>{t('todo_list', '待玩清单')}</Link>
             <Link href="/group-manager" className="nav-link py-2" onClick={toggleMenu}>{t('group_manager', '游戏组')}</Link>
             <div className="flex items-center justify-between py-2">
-              <Link href="/todo-list" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
+              {/* <Link href="/todo-list" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
                 <TodoListIcon className="h-5 w-5" />
                 <span>{t('todo_list', '待玩清单')}</span>
-              </Link>
-              <Link href="/cart" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
+              </Link> */}
+              {/* <Link href="/cart" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
                 <CartIcon className="h-5 w-5" />
                 <span>{t('cart')}</span>
-              </Link>
+              </Link> */}
               {!user ? (
                 <Button variant="default" size="sm" asChild>
                   <Link href="/signin">{t('login')}/{t('register')}</Link>
                 </Button>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-start gap-1">
                   <span className="text-gray-700 text-sm font-medium">
                     {profile?.username ? `${profile.username}(${user.email})` : user.email}
                   </span>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/profile">{t('profile_center', '个人中心')}</Link>
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleLogout}>{t('logout')}</Button>
+                  <div className="flex gap-2 mt-5">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href="/profile">{t('profile_center', '个人中心')}</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleLogout}>{t('logout')}</Button>
+                  </div>
                 </div>
               )}
               <div className="ml-2 flex items-center gap-1 bg-gray-100 rounded px-2 py-1">

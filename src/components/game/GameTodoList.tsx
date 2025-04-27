@@ -287,6 +287,27 @@ export function GameTodoList() {
         if (joined) {
           setJoinedGroups(joined as unknown as GameGroup[]);
         }
+
+        // 获取URL中的组ID参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const groupIdParam = urlParams.get('groupId');
+        
+        // 如果URL中有组ID，并且用户属于该组，则选择该组
+        if (groupIdParam) {
+          const allGroups = [...(createdGroups || []), ...(joined as unknown as GameGroup[] || [])];
+          const selectedGroupFromUrl = allGroups.find(g => g.id === groupIdParam);
+          if (selectedGroupFromUrl) {
+            setSelectedGroup(selectedGroupFromUrl);
+          }
+        } 
+        // 如果没有URL参数但用户有组，默认选择第一个组（优先选择创建的组）
+        else if ((createdGroups && createdGroups.length > 0) || (joined && (joined as unknown as GameGroup[]).length > 0)) {
+          if (createdGroups && createdGroups.length > 0) {
+            setSelectedGroup(createdGroups[0]);
+          } else if (joined && (joined as unknown as GameGroup[]).length > 0) {
+            setSelectedGroup((joined as unknown as GameGroup[])[0]);
+          }
+        }
       } catch (error) {
         console.error("加载游戏组失败:", error);
       } finally {
@@ -753,7 +774,13 @@ export function GameTodoList() {
         <h3 className="text-sm font-medium text-gray-500 mb-2">{t('select_group', '选择游戏组')}</h3>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => setSelectedGroup(null)}
+            onClick={() => {
+              setSelectedGroup(null);
+              // 更新URL，移除groupId参数
+              const url = new URL(window.location.href);
+              url.searchParams.delete('groupId');
+              window.history.pushState({}, '', url);
+            }}
             className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
               selectedGroup === null 
                 ? 'bg-blue-100 border-blue-300 text-blue-800' 
@@ -766,7 +793,13 @@ export function GameTodoList() {
           {allGroups.map(group => (
             <button
               key={group.id}
-              onClick={() => setSelectedGroup(group)}
+              onClick={() => {
+                setSelectedGroup(group);
+                // 更新URL，添加groupId参数
+                const url = new URL(window.location.href);
+                url.searchParams.set('groupId', group.id);
+                window.history.pushState({}, '', url);
+              }}
               className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                 selectedGroup?.id === group.id
                   ? 'bg-blue-100 border-blue-300 text-blue-800' 

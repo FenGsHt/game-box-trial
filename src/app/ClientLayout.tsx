@@ -20,7 +20,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             <main className="flex-grow pt-20">
               {children}
             </main>
-            <Footer />
+            {/* <Footer /> */}
             <Chat />
           </div>
         </Providers>
