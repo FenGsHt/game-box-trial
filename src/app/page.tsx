@@ -66,9 +66,9 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 opacity-90"></div>
               <div className="relative p-8 h-full flex flex-col justify-between z-10">
                 <div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-4 w-16 h-16 flex items-center justify-center mb-6">
+                  {/* <div className="bg-white bg-opacity-20 rounded-lg p-4 w-16 h-16 flex items-center justify-center mb-6">
                     <GroupIcon className="h-8 w-8 text-white" />
-                  </div>
+                  </div> */}
                   <h3 className="text-2xl font-bold text-white mb-2">游戏组</h3>
                   <p className="text-white text-opacity-90">
                     创建和管理您的游戏组，邀请好友共同游玩
@@ -97,9 +97,9 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600 opacity-90"></div>
               <div className="relative p-8 h-full flex flex-col justify-between z-10">
                 <div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-4 w-16 h-16 flex items-center justify-center mb-6">
+                  {/* <div className="bg-white bg-opacity-20 rounded-lg p-4 w-16 h-16 flex items-center justify-center mb-6">
                     <TodoListIcon className="h-8 w-8 text-white" />
-                  </div>
+                  </div> */}
                   <h3 className="text-2xl font-bold text-white mb-2">待玩清单</h3>
                   <p className="text-white text-opacity-90">
                     管理您想要玩的游戏，记录评分和游戏体验
