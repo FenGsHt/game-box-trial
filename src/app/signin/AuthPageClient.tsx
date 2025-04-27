@@ -28,10 +28,24 @@ export default function AuthPageClient() {
         router.push("/");
       }
     } else {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setError(error.message);
       } else {
+        if (data && data.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({ 
+              id: data.user.id, 
+              email: email,
+              username: email.split('@')[0]
+            });
+          
+          if (profileError) {
+            console.error("更新用户资料失败:", profileError);
+          }
+        }
+        
         alert("注册成功，请查收邮箱激活账号！");
         setIsLogin(true);
       }

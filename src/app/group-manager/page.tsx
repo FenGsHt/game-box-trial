@@ -326,10 +326,10 @@ export default function GroupManagerPage() {
               <form onSubmit={handleAddMember} className="mb-6">
                 <div className="flex gap-2">
                   <Input
-                    type="email"
+                    type="text"
                     value={newMemberEmail}
                     onChange={(e) => setNewMemberEmail(e.target.value)}
-                    placeholder="输入成员邮箱..."
+                    placeholder="输入成员用户名..."
                     className="flex-1"
                   />
                   <Button type="submit" disabled={isAddingMember || !newMemberEmail.trim()}>
@@ -341,7 +341,6 @@ export default function GroupManagerPage() {
               {/* 成员列表 */}
               <div className="bg-gray-50 p-4 rounded-md">
                 <h3 className="font-medium mb-3">成员列表</h3>
-                
                 {groupMembers.length === 0 ? (
                   <div className="text-center py-4 text-gray-500">
                     此组还没有成员，尝试添加一些成员吧

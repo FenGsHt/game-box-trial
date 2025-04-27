@@ -12,11 +12,23 @@ export async function getProfile() {
   return data;
 }
 
-export async function updateProfile(username: string) {
+export async function updateProfile(username: string, email?: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+  
+  const profileData: { id: string; username: string; email?: string } = { 
+    id: user.id, 
+    username 
+  };
+  
+  // 如果提供了email，则一并更新
+  if (email) {
+    profileData.email = email;
+  }
+  
   const { error } = await supabase
     .from('profiles')
-    .upsert({ id: user.id, username });
+    .upsert(profileData);
+  
   return !error;
 } 
