@@ -236,6 +236,7 @@ export function GameTodoList() {
   const [newComment, setNewComment] = useState('')
   const [commentingTodo, setCommentingTodo] = useState<string | null>(null)
   const [sortOrder, setSortOrder] = useState<'default' | 'rating'>('default')
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
 
   // 获取用户信息
   useEffect(() => {
@@ -404,7 +405,7 @@ export function GameTodoList() {
           // 获取所有用户ID
           const userIds = [...new Set(data.map(comment => comment.user_id))];
           
-          // 查询这些用户的信息
+          // 从users表获取用户信息
           const { data: userData, error: userError } = await supabase
             .from('users')
             .select('id, email, username')
@@ -413,9 +414,14 @@ export function GameTodoList() {
           if (userError) {
             console.error('获取用户信息失败:', userError);
           }
+
+          // 我们不再尝试从auth.users获取邮箱信息，因为这需要特殊权限
+          // 相反，我们依赖于已在users表中的数据
           
           // 创建用户信息映射
           const userMap: Record<string, { email?: string, username?: string }> = {};
+          
+          // 从users表填充用户信息
           if (userData) {
             userData.forEach((user: { id: string, email?: string, username?: string }) => {
               userMap[user.id] = { email: user.email, username: user.username };
@@ -491,6 +497,47 @@ export function GameTodoList() {
       subscription.unsubscribe();
     };
   }, [todos, user?.id]);
+
+  // 确保当前用户信息已在users表中
+  useEffect(() => {
+    if (!user?.id || !user?.email) return;
+
+    // 创建或更新用户profile
+    const syncUserProfile = async () => {
+      try {
+        // 检查用户是否已存在users表中
+        const { data, error } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 是 "未找到结果" 错误
+          console.error('检查用户profile失败:', error);
+          return;
+        }
+        
+        // 如果用户不存在，创建用户profile
+        if (!data) {
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([{
+              id: user.id,
+              email: user.email,
+              username: user.email.split('@')[0] // 默认使用邮箱前缀作为用户名
+            }]);
+          
+          if (insertError) {
+            console.error('创建用户profile失败:', insertError);
+          }
+        }
+      } catch (error) {
+        console.error('同步用户profile异常:', error);
+      }
+    };
+    
+    syncUserProfile();
+  }, [user?.id, user?.email]);
 
   // 添加待玩游戏
   const addTodo = async (e: React.FormEvent) => {
@@ -718,9 +765,22 @@ export function GameTodoList() {
 
   // 添加留言
   const addComment = async (todoId: string) => {
-    if (!newComment.trim() || !user?.id) return;
+    if (!newComment.trim() || !user?.id || !user?.email) return;
     
     try {
+      const email = user.email as string; // 类型断言，告诉TypeScript此时email一定存在
+      
+      // 先确保用户数据在users表中
+      await supabase.from('users').upsert([{
+        id: user.id,
+        email: email,
+        // 使用邮箱前缀作为用户名
+        username: email.split('@')[0] || 'user'
+      }], {
+        onConflict: 'id'
+      });
+      
+      // 然后添加留言
       const { error } = await supabase
         .from('game_comments')
         .insert([{
@@ -759,6 +819,14 @@ export function GameTodoList() {
     setSortOrder(current => current === 'default' ? 'rating' : 'default');
   };
 
+  // 切换留言展开/折叠状态
+  const toggleCommentExpand = (todoId: string) => {
+    setExpandedComments(prev => ({
+      ...prev,
+      [todoId]: !prev[todoId]
+    }));
+  };
+
   // 渲染留言表单
   const renderCommentForm = (todoId: string) => {
     return (
@@ -785,6 +853,14 @@ export function GameTodoList() {
   // 渲染留言列表
   const renderComments = (todoId: string) => {
     const todoComments = comments[todoId] || [];
+    const isExpanded = expandedComments[todoId] || false;
+    const MAX_VISIBLE_COMMENTS = 3;
+    const hasMoreComments = todoComments.length > MAX_VISIBLE_COMMENTS;
+    
+    // 根据展开状态决定显示的留言
+    const visibleComments = isExpanded 
+      ? todoComments 
+      : todoComments.slice(0, MAX_VISIBLE_COMMENTS);
     
     if (todoComments.length === 0 && commentingTodo !== todoId) {
       return (
@@ -801,18 +877,44 @@ export function GameTodoList() {
       <div className="mt-2">
         {todoComments.length > 0 && (
           <div className="space-y-2 mb-2">
-            <h4 className="text-sm font-medium text-gray-700">{t('comments', '留言')}</h4>
-            {todoComments.map(comment => (
-              <div key={comment.id} className="text-sm bg-gray-50 p-2 rounded-md">
-                <div className="font-medium text-blue-700">
-                  {comment.user_username || comment.user_email?.split('@')[0] || '用户'}:
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-gray-700">{t('comments', '留言')}</h4>
+              {hasMoreComments && (
+                <button 
+                  onClick={() => toggleCommentExpand(todoId)}
+                  className="text-xs text-blue-600 hover:text-blue-800"
+                >
+                  {isExpanded 
+                    ? t('collapse_comments', '收起留言') 
+                    : t('expand_comments', `展开全部(${todoComments.length})`)}
+                </button>
+              )}
+            </div>
+            
+            {visibleComments.map(comment => {
+              const displayName = comment.user_username || (comment.user_email ? comment.user_email.split('@')[0] : null) || (comment.user_id === user?.id ? '我' : '用户');
+              return (
+                <div key={comment.id} className="text-sm bg-gray-50 p-2 rounded-md flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="font-medium text-blue-700">{displayName}:</span>
+                  <span className="text-gray-700 flex-1 break-words">{comment.content}</span>
+                  <span className="text-xs text-gray-500 ml-auto">{new Date(comment.created_at).toLocaleString()}</span>
                 </div>
-                <div className="mt-1 text-gray-700">{comment.content}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {new Date(comment.created_at).toLocaleString()}
-                </div>
+              );
+            })}
+            
+            {hasMoreComments && !isExpanded && (
+              <div className="text-center">
+                <button 
+                  onClick={() => toggleCommentExpand(todoId)}
+                  className="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center"
+                >
+                  <span>{t('more_comments', `查看更多留言(${todoComments.length - MAX_VISIBLE_COMMENTS})`)}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
               </div>
-            ))}
+            )}
           </div>
         )}
         
