@@ -1,7 +1,6 @@
 "use client"
 import { GameCard } from "@/components/game/GameCard";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from 'react-i18next';
 
 // 搜索图标矢量组件
 const SearchIcon = (props: { className?: string }) => (
@@ -149,21 +148,21 @@ const allGames = [
 ];
 
 export default function StorePage() {
-  const { t } = useTranslation();
+  // 去除多语言，直接使用中文
   const categories = [
-    t('all', '全部'),
-    t('rpg', '角色扮演'),
-    t('moba', '多人竞技'),
-    t('sandbox', '沙盒'),
-    t('adventure', '冒险'),
-    t('strategy', '策略'),
-    t('shooter', '射击'),
-    t('sports', '体育'),
-    t('racing', '赛车'),
+    "全部",
+    "角色扮演",
+    "多人竞技",
+    "沙盒",
+    "冒险",
+    "策略",
+    "射击",
+    "体育",
+    "赛车",
   ];
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">{t('store', '游戏商店')}</h1>
+      <h1 className="text-3xl font-bold mb-8">游戏商店</h1>
       
       {/* 过滤工具条 */}
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
@@ -182,17 +181,17 @@ export default function StorePage() {
           
           <div className="flex gap-4">
             <select className="rounded-md border border-gray-300 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="relevance">{t('sort_relevance', '相关度')}</option>
-              <option value="price_low">{t('sort_price_low', '价格: 低到高')}</option>
-              <option value="price_high">{t('sort_price_high', '价格: 高到低')}</option>
-              <option value="rating">{t('sort_rating', '评分: 高到低')}</option>
-              <option value="release">{t('sort_release', '发行日期: 新到旧')}</option>
+              <option value="relevance">相关度</option>
+              <option value="price_low">价格: 低到高</option>
+              <option value="price_high">价格: 高到低</option>
+              <option value="rating">评分: 高到低</option>
+              <option value="release">发行日期: 新到旧</option>
             </select>
             
             <div className="relative">
               <input 
                 type="search" 
-                placeholder={t('search_games', '搜索游戏...')} 
+                placeholder="搜索游戏..." 
                 className="rounded-md border border-gray-300 pl-10 pr-3 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <SearchIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -212,7 +211,7 @@ export default function StorePage() {
       <div className="flex justify-center mt-12">
         <nav className="flex items-center space-x-2">
           <Button variant="outline" size="sm" disabled>
-            {t('prev', '上一页')}
+            上一页
           </Button>
           <Button variant="default" size="sm">1</Button>
           <Button variant="outline" size="sm">2</Button>
@@ -220,25 +219,25 @@ export default function StorePage() {
           <span className="px-2">...</span>
           <Button variant="outline" size="sm">10</Button>
           <Button variant="outline" size="sm">
-            {t('next', '下一页')}
+            下一页
           </Button>
         </nav>
       </div>
       
       {/* 订阅区域 */}
       <div className="mt-16 bg-blue-50 rounded-xl p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">{t('subscription_title', '不错过任何游戏优惠')}</h2>
+        <h2 className="text-2xl font-bold mb-4">不错过任何游戏优惠</h2>
         <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-          {t('subscription_desc', '订阅我们的通讯，获取独家折扣、新游戏发布通知和个性化推荐。')}
+          订阅我们的通讯，获取独家折扣、新游戏发布通知和个性化推荐。
         </p>
         <div className="flex flex-col sm:flex-row justify-center max-w-md mx-auto">
           <input
             type="email"
-            placeholder={t('your_email', '您的邮箱地址')}
+            placeholder="您的邮箱地址"
             className="px-4 py-3 rounded-l-md sm:rounded-r-none mb-2 sm:mb-0 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <Button size="lg" className="sm:rounded-l-none">
-            {t('subscribe', '订阅')}
+            订阅
           </Button>
         </div>
       </div>
