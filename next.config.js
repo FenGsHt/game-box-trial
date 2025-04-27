@@ -16,10 +16,8 @@ const nextConfig = {
       'i.pravatar.cc'
     ],
   },
-  // 增加构建超时时间（单位：秒）
-  experimental: {
-    staticPageGenerationTimeout: 180
-  }
+  // Next.js 15中的配置方式可能与文档不同，移除自定义超时配置
+  experimental: {}
 };
 
 module.exports = nextConfig;
