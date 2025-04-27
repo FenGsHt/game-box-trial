@@ -20,6 +20,7 @@ export interface GameTodo {
   link?: string // 游戏链接
   note?: string // 游戏留言
   price?: number // 游戏价格
+  tags?: string[] // 游戏标签ID列表
 }
 
 // 游戏留言类型
@@ -31,6 +32,15 @@ export interface GameComment {
   created_at: string
   user_email?: string
   user_username?: string
+}
+
+// 游戏标签类型
+export interface GameTag {
+  id: string
+  name: string    // 标签名称
+  color: string   // 标签颜色
+  created_at: string
+  creator_id?: string // 创建者ID
 }
 
 // 添加图标
@@ -237,6 +247,14 @@ export function GameTodoList() {
   const [commentingTodo, setCommentingTodo] = useState<string | null>(null)
   const [sortOrder, setSortOrder] = useState<'default' | 'rating'>('default')
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
+  const [tags, setTags] = useState<GameTag[]>([])
+  const [loadingTags, setLoadingTags] = useState(false)
+  const [tagModalOpen, setTagModalOpen] = useState(false)
+  const [editingTodoTags, setEditingTodoTags] = useState<string | null>(null)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [newTagName, setNewTagName] = useState('')
+  const [newTagColor, setNewTagColor] = useState('#3B82F6') // 默认蓝色
+  const [tagError, setTagError] = useState('')
 
   // 获取用户信息
   useEffect(() => {
@@ -538,6 +556,63 @@ export function GameTodoList() {
     
     syncUserProfile();
   }, [user?.id, user?.email]);
+
+  // 加载游戏标签
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        setLoadingTags(true);
+        const { data, error } = await supabase
+          .from('game_tags')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          console.error('获取游戏标签失败:', error);
+          return;
+        }
+        
+        setTags(data || []);
+      } catch (error) {
+        console.error('获取游戏标签异常:', error);
+      } finally {
+        setLoadingTags(false);
+      }
+    };
+    
+    fetchTags();
+    
+    // 设置实时订阅
+    const subscription = supabase
+      .channel('game_tags_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'game_tags'
+        }, 
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setTags(current => [payload.new as GameTag, ...current]);
+          } else if (payload.eventType === 'UPDATE') {
+            setTags(current => 
+              current.map(tag => 
+                tag.id === payload.new.id ? (payload.new as GameTag) : tag
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setTags(current => 
+              current.filter(tag => tag.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // 添加待玩游戏
   const addTodo = async (e: React.FormEvent) => {
@@ -932,6 +1007,263 @@ export function GameTodoList() {
     );
   };
 
+  // 打开标签管理弹窗
+  const openTagModal = (todoId: string) => {
+    const todo = todos.find(t => t.id === todoId);
+    if (todo) {
+      setSelectedTags(todo.tags || []);
+      setEditingTodoTags(todoId);
+      setTagModalOpen(true);
+    }
+  };
+
+  // 关闭标签管理弹窗
+  const closeTagModal = () => {
+    setTagModalOpen(false);
+    setEditingTodoTags(null);
+    setSelectedTags([]);
+    setNewTagName('');
+    setNewTagColor('#3B82F6');
+    setTagError('');
+  };
+
+  // 切换标签选择状态
+  const toggleTagSelection = (tagId: string) => {
+    setSelectedTags(current => 
+      current.includes(tagId)
+        ? current.filter(id => id !== tagId)
+        : [...current, tagId]
+    );
+  };
+
+  // 创建新标签
+  const createTag = async () => {
+    if (!newTagName.trim()) {
+      setTagError('标签名称不能为空');
+      return;
+    }
+    
+    if (!user?.id) return;
+    
+    try {
+      setTagError('');
+      const { data, error } = await supabase
+        .from('game_tags')
+        .insert([
+          {
+            name: newTagName.trim(),
+            color: newTagColor,
+            creator_id: user.id
+          }
+        ])
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('创建标签失败:', error);
+        setTagError('创建标签失败');
+        return;
+      }
+      
+      // 自动选中新创建的标签
+      if (data) {
+        setSelectedTags(current => [...current, data.id]);
+        setNewTagName('');
+      }
+    } catch (error) {
+      console.error('创建标签异常:', error);
+      setTagError('创建标签失败');
+    }
+  };
+
+  // 保存待玩游戏标签
+  const saveTodoTags = async () => {
+    if (!editingTodoTags || !user?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('game_todos')
+        .update({ tags: selectedTags })
+        .eq('id', editingTodoTags);
+        
+      if (error) {
+        console.error('更新游戏标签失败:', error);
+        return;
+      }
+      
+      // 更新本地状态
+      setTodos(current => 
+        current.map(todo => 
+          todo.id === editingTodoTags
+            ? { ...todo, tags: selectedTags }
+            : todo
+        )
+      );
+      
+      closeTagModal();
+    } catch (error) {
+      console.error('更新游戏标签异常:', error);
+    }
+  };
+
+  // 获取标签显示名称
+  const getTagDisplayName = (tag: GameTag) => {
+    return tag.name;
+  };
+
+  // 渲染标签管理弹窗
+  const renderTagModal = () => {
+    if (!tagModalOpen) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] flex flex-col">
+          <div className="p-4 border-b">
+            <h3 className="text-lg font-medium">{t('manage_tags', '管理标签')}</h3>
+          </div>
+          
+          <div className="p-4 flex-1 overflow-y-auto">
+            {loadingTags ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-spin h-6 w-6 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+              </div>
+            ) : (
+              <>
+                <h4 className="font-medium mb-2">{t('select_tags', '选择标签')}</h4>
+                <div className="space-y-2 mb-6">
+                  {tags.length === 0 ? (
+                    <p className="text-sm text-gray-500">{t('no_tags', '没有可用的标签')}</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map(tag => (
+                        <button
+                          key={tag.id}
+                          onClick={() => toggleTagSelection(tag.id)}
+                          className={`px-2 py-1 rounded-full text-sm font-medium transition-colors ${
+                            selectedTags.includes(tag.id)
+                              ? 'opacity-100 ring-2 ring-offset-1'
+                              : 'opacity-70 hover:opacity-100'
+                          }`}
+                          style={{ 
+                            backgroundColor: tag.color,
+                            color: getContrastColor(tag.color)
+                          }}
+                        >
+                          {getTagDisplayName(tag)}
+                          {selectedTags.includes(tag.id) && (
+                            <span className="ml-1">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <h4 className="font-medium mb-2">{t('create_new_tag', '创建新标签')}</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm mb-1">{t('tag_name', '标签名称')}</label>
+                    <Input
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      placeholder={t('tag_name_placeholder', '输入标签名称')}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm mb-1">{t('tag_color', '标签颜色')}</label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="color"
+                        value={newTagColor}
+                        onChange={(e) => setNewTagColor(e.target.value)}
+                        className="w-12 h-9 p-1 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <Input
+                          type="text"
+                          value={newTagColor}
+                          onChange={(e) => setNewTagColor(e.target.value)}
+                          placeholder="#HEX"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {tagError && (
+                    <p className="text-sm text-red-500">{tagError}</p>
+                  )}
+                  
+                  <Button
+                    onClick={createTag}
+                    className="w-full"
+                    disabled={!newTagName.trim()}
+                  >
+                    {t('create_tag', '创建标签')}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+          
+          <div className="p-4 border-t bg-gray-50 flex justify-end space-x-2">
+            <Button variant="outline" onClick={closeTagModal}>
+              {t('cancel', '取消')}
+            </Button>
+            <Button onClick={saveTodoTags}>
+              {t('save', '保存')}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 辅助函数：根据背景色获取对比色文本
+  const getContrastColor = (hexColor: string) => {
+    // 简单转换十六进制为RGB
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    // 计算亮度 (W3C推荐公式)
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    // 亮度大于125返回黑色，否则返回白色
+    return brightness > 125 ? '#000000' : '#FFFFFF';
+  };
+
+  // 渲染游戏标签
+  const renderTags = (todo: GameTodo) => {
+    if (!todo.tags || todo.tags.length === 0) return null;
+    
+    const todoTags = tags.filter(tag => todo.tags?.includes(tag.id));
+    
+    return (
+      <div className="mt-1 flex flex-wrap gap-1">
+        {todoTags.map(tag => (
+          <span
+            key={tag.id}
+            className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+            style={{ 
+              backgroundColor: tag.color,
+              color: getContrastColor(tag.color)
+            }}
+          >
+            {getTagDisplayName(tag)}
+          </span>
+        ))}
+        <button
+          onClick={() => openTagModal(todo.id)}
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
+        >
+          {t('edit_tags', '编辑')}
+        </button>
+      </div>
+    );
+  };
+
   if (!user) {
     return (
       <div className="text-center py-8">
@@ -996,36 +1328,49 @@ export function GameTodoList() {
                     onCheckedChange={() => toggleTodo(todo.id, todo.is_completed)}
                     className="h-5 w-5"
                   />
-                  <label 
-                    htmlFor={`todo-${todo.id}`}
-                    className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium flex items-center gap-2`}
-                  >
-                    {todo.link ? (
-                      <a 
-                        href={todo.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {todo.title}
-                      </a>
-                    ) : (
-                      todo.title
-                    )}
-                    {todo.group_id && selectedGroup && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                        {selectedGroup.name}
-                      </span>
-                    )}
-                    {todo.price && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                        ¥{todo.price.toFixed(2)}
-                      </span>
-                    )}
-                  </label>
+                  <div className="flex flex-col">
+                    <label 
+                      htmlFor={`todo-${todo.id}`}
+                      className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium flex items-center gap-2`}
+                    >
+                      {todo.link ? (
+                        <a 
+                          href={todo.link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {todo.title}
+                        </a>
+                      ) : (
+                        todo.title
+                      )}
+                      {todo.group_id && selectedGroup && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          {selectedGroup.name}
+                        </span>
+                      )}
+                      {todo.price && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                          ¥{todo.price.toFixed(2)}
+                        </span>
+                      )}
+                    </label>
+                    {renderTags(todo)}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openTagModal(todo.id)}
+                    className="text-gray-400 hover:text-blue-500 transition-colors"
+                    aria-label={t('manage_tags', '管理标签')}
+                    title={t('manage_tags', '管理标签')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  </button>
                   <button
                     onClick={() => startEditing(todo)}
                     className="text-gray-400 hover:text-blue-500 transition-colors"
@@ -1084,6 +1429,8 @@ export function GameTodoList() {
           ))}
         </ul>
       )}
+      
+      {renderTagModal()}
     </div>
   )
 } 
