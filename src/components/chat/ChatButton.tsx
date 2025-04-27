@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { useTranslation } from 'react-i18next'
+// import { useTranslation } from 'react-i18next'
 
 // 聊天图标
 const ChatIcon = (props: { className?: string }) => (
@@ -26,7 +26,7 @@ interface ChatButtonProps {
 }
 
 export function ChatButton({ onClick, isOpen }: ChatButtonProps) {
-  const { t } = useTranslation()
+  // const { t } = useTranslation()
   
   return (
     <button
@@ -36,11 +36,11 @@ export function ChatButton({ onClick, isOpen }: ChatButtonProps) {
           ? 'bg-red-500 hover:bg-red-600 rotate-90'
           : 'bg-blue-600 hover:bg-blue-700'
       }`}
-      aria-label={isOpen ? t('close_chat', '关闭聊天') : t('open_chat', '打开聊天')}
+      aria-label={isOpen ? '关闭聊天' : '打开聊天'}
     >
       <ChatIcon className="w-7 h-7 text-white" />
       <span className="sr-only">
-        {isOpen ? t('close_chat', '关闭聊天') : t('open_chat', '打开聊天')}
+        {isOpen ? '关闭聊天' : '打开聊天'}
       </span>
     </button>
   )

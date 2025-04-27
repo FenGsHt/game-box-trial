@@ -1,7 +1,7 @@
 "use client"
 
 import Link from 'next/link'
-import { useTranslation } from 'react-i18next';
+// import { useTranslation } from 'react-i18next';
 
 // 社交媒体图标组件
 const TwitterIcon = (props: { className?: string }) => (
@@ -64,107 +64,107 @@ const WechatPayIcon = (props: { className?: string }) => (
 )
 
 export function Footer() {
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
   return (
     <footer className="bg-gray-900 text-white pt-12 pb-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4">{t('home')}</h3>
+            <h3 className="text-xl font-bold mb-4">首页</h3>
             <p className="text-gray-400 mb-4">
-              {t('footer_desc', '您的一站式游戏中心，提供最新最热的游戏、资讯和互动社区。')}
+              您的一站式游戏中心，提供最新最热的游戏、资讯和互动社区。
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label={t('social_twitter', 'Twitter')}>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
                 <TwitterIcon className="h-6 w-6" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label={t('social_instagram', 'Instagram')}>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
                 <InstagramIcon className="h-6 w-6" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label={t('social_facebook', 'Facebook')}>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
                 <FacebookIcon className="h-6 w-6" />
               </a>
             </div>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-4">{t('quick_links', '快速链接')}</h3>
+            <h3 className="text-lg font-semibold mb-4">快速链接</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-                  {t('home')}
+                  首页
                 </Link>
               </li>
               <li>
                 <Link href="/store" className="text-gray-400 hover:text-white transition-colors">
-                  {t('store')}
+                  游戏商城
                 </Link>
               </li>
               <li>
                 <Link href="/categories" className="text-gray-400 hover:text-white transition-colors">
-                  {t('categories')}
+                  游戏分类
                 </Link>
               </li>
               <li>
                 <Link href="/library" className="text-gray-400 hover:text-white transition-colors">
-                  {t('games')}
+                  游戏库
                 </Link>
               </li>
               <li>
                 <Link href="/community" className="text-gray-400 hover:text-white transition-colors">
-                  {t('community')}
+                  社区
                 </Link>
               </li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-4">{t('support', '支持')}</h3>
+            <h3 className="text-lg font-semibold mb-4">支持</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/help" className="text-gray-400 hover:text-white transition-colors">
-                  {t('help_center', '帮助中心')}
+                  帮助中心
                 </Link>
               </li>
               <li>
                 <Link href="/faq" className="text-gray-400 hover:text-white transition-colors">
-                  {t('faq', '常见问题')}
+                  常见问题
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">
-                  {t('contact_us', '联系我们')}
+                  联系我们
                 </Link>
               </li>
               <li>
                 <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
-                  {t('privacy_policy', '隐私政策')}
+                  隐私政策
                 </Link>
               </li>
               <li>
                 <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
-                  {t('terms_of_service', '服务条款')}
+                  服务条款
                 </Link>
               </li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-4">{t('subscribe_news', '订阅最新消息')}</h3>
+            <h3 className="text-lg font-semibold mb-4">订阅最新消息</h3>
             <p className="text-gray-400 mb-4">
-              {t('subscribe_desc', '获取最新游戏资讯、优惠和活动通知。')}
+              获取最新游戏资讯、优惠和活动通知。
             </p>
             <form className="flex flex-col space-y-2">
               <input
                 type="email"
-                placeholder={t('input_email', '输入您的邮箱')}
+                placeholder="输入您的邮箱"
                 className="bg-gray-800 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
               >
-                {t('subscribe', '订阅')}
+                订阅
               </button>
             </form>
           </div>
@@ -172,7 +172,7 @@ export function Footer() {
         
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} {t('company_name', 'GameBox')}. {t('all_rights_reserved', '保留所有权利.')}
+            &copy; {new Date().getFullYear()} GameBox. 保留所有权利.
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <VisaIcon className="h-8" />

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
+// import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
@@ -17,7 +17,7 @@ import {
 } from '@/lib/gameGroupApi'
 
 export default function GroupManagerPage() {
-  const { t } = useTranslation()
+  // const { t } = useTranslation()
   const [userGroups, setUserGroups] = useState<GameGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ id?: string } | null>(null)
@@ -171,7 +171,7 @@ export default function GroupManagerPage() {
 
   // 删除组
   const handleDeleteGroup = async (groupId: string) => {
-    if (!confirm(t('confirm_delete_group', '确定要删除这个游戏组吗？组内所有待玩游戏也将被删除。'))) {
+    if (!confirm('确定要删除这个游戏组吗？组内所有待玩游戏也将被删除。')) {
       return
     }
     
@@ -197,9 +197,9 @@ export default function GroupManagerPage() {
     return (
       <div className="container mx-auto px-4 py-8 mt-16">
         <div className="text-center py-8">
-          <p className="text-gray-500 mb-4">{t('group_login_required', '请登录后管理您的游戏组')}</p>
+          <p className="text-gray-500 mb-4">请登录后管理您的游戏组</p>
           <Button asChild>
-            <a href="/signin">{t('signin', '登录')}</a>
+            <a href="/signin">登录</a>
           </Button>
         </div>
       </div>
@@ -208,7 +208,7 @@ export default function GroupManagerPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 mt-16">
-      <h1 className="text-2xl md:text-3xl font-bold mb-8">{t('group_manager', '游戏组管理')}</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-8">游戏组管理</h1>
       
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
@@ -225,7 +225,7 @@ export default function GroupManagerPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 左侧：组列表 */}
         <div className="md:col-span-1 bg-white p-4 rounded-lg shadow-sm">
-          <h2 className="text-lg font-bold mb-4">{t('your_groups', '您创建的游戏组')}</h2>
+          <h2 className="text-lg font-bold mb-4">您创建的游戏组</h2>
           
           {/* 创建新组表单 */}
           <form onSubmit={handleCreateGroup} className="mb-6">
@@ -321,7 +321,7 @@ export default function GroupManagerPage() {
           {selectedGroup ? (
             <>
               <h2 className="text-lg font-bold mb-4">
-                {t('group_members', '《{{groupName}}》成员管理', { groupName: selectedGroup.name })}
+                {`《${selectedGroup.name}》成员管理`}
               </h2>
               
               {/* 添加成员表单 */}
@@ -331,22 +331,22 @@ export default function GroupManagerPage() {
                     type="email"
                     value={newMemberEmail}
                     onChange={(e) => setNewMemberEmail(e.target.value)}
-                    placeholder={t('member_email_placeholder', '输入成员邮箱...')}
+                    placeholder="输入成员邮箱..."
                     className="flex-1"
                   />
                   <Button type="submit" disabled={isAddingMember || !newMemberEmail.trim()}>
-                    {isAddingMember ? t('adding', '添加中...') : t('add_member', '添加成员')}
+                    {isAddingMember ? '添加中...' : '添加成员'}
                   </Button>
                 </div>
               </form>
               
               {/* 成员列表 */}
               <div className="bg-gray-50 p-4 rounded-md">
-                <h3 className="font-medium mb-3">{t('members', '成员列表')}</h3>
+                <h3 className="font-medium mb-3">成员列表</h3>
                 
                 {groupMembers.length === 0 ? (
                   <div className="text-center py-4 text-gray-500">
-                    {t('no_members', '此组还没有成员，尝试添加一些成员吧')}
+                    此组还没有成员，尝试添加一些成员吧
                   </div>
                 ) : (
                   <ul className="space-y-2">
@@ -356,8 +356,8 @@ export default function GroupManagerPage() {
                           <span className="font-medium">{member.user?.email}</span>
                           <span className="text-xs text-gray-500 ml-2">
                             {member.user_id === selectedGroup.leader_id 
-                              ? t('group_leader', '组长') 
-                              : t('member', '成员')}
+                              ? '组长' 
+                              : '成员'}
                           </span>
                         </div>
                         
@@ -390,7 +390,7 @@ export default function GroupManagerPage() {
             </>
           ) : (
             <div className="text-center py-8 text-gray-500">
-              {t('select_group_prompt', '请从左侧选择一个游戏组进行管理，或创建一个新的游戏组')}
+              请从左侧选择一个游戏组进行管理，或创建一个新的游戏组
             </div>
           )}
         </div>

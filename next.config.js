@@ -1,5 +1,3 @@
-const { i18n } = require('./next-i18next.config');
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
@@ -18,7 +16,10 @@ const nextConfig = {
       'i.pravatar.cc'
     ],
   },
-  i18n,
+  // 增加构建超时时间（单位：秒）
+  experimental: {
+    staticPageGenerationTimeout: 180
+  }
 };
 
 module.exports = nextConfig;

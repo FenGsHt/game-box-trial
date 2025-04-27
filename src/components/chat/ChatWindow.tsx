@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { useTranslation } from 'react-i18next'
+// import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { 
   ChatMessage, 
@@ -58,7 +58,7 @@ const CloseIcon = (props: { className?: string }) => (
 )
 
 export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
-  const { t } = useTranslation()
+  // const { t } = useTranslation()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [user, setUser] = useState<User | null>(null)
@@ -68,9 +68,9 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
   // 系统欢迎消息
   const welcomeMessage: ChatMessage = {
     id: 'welcome',
-    content: t('welcome_message', '欢迎来到游戏盒子聊天室！有什么可以帮助您的吗？'),
+    content: '欢迎来到游戏盒子聊天室！有什么可以帮助您的吗？',
     sender_id: 'system',
-    sender_name: t('system', '系统'),
+    sender_name: '系统',
     created_at: new Date().toISOString()
   }
 
@@ -143,7 +143,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
        await sendChatMessage(
          messageContent,
          userId,
-         user?.email?.split('@')[0] || t('guest', '访客')
+         user?.email?.split('@')[0] || '访客'
        )
      } catch (error) {
        console.error('发送消息失败:', error)
@@ -157,11 +157,11 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
     <div className="fixed bottom-20 right-6 w-80 sm:w-96 bg-white rounded-lg shadow-xl flex flex-col z-50 max-h-[70vh] border border-gray-200">
       {/* 聊天窗口头部 */}
       <div className="flex items-center justify-between px-4 py-3 bg-blue-600 text-white rounded-t-lg">
-        <h3 className="font-medium">{t('chat_title', '游戏盒子聊天')}</h3>
+        <h3 className="font-medium">游戏盒子聊天</h3>
         <button 
           onClick={onClose}
           className="text-white/80 hover:text-white focus:outline-none"
-          aria-label={t('close', '关闭')}
+          aria-label="关闭"
         >
           <CloseIcon className="w-5 h-5" />
         </button>
@@ -181,7 +181,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
             >
               <div className="flex items-center mb-1">
                 <span className="text-xs font-medium text-gray-500">
-                  {msg.sender_id === (user?.id || 'guest') ? t('you', '你') : msg.sender_name}
+                  {msg.sender_id === (user?.id || 'guest') ? '你' : msg.sender_name}
                 </span>
                 <span className="text-xs text-gray-400 ml-2">
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -208,7 +208,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          placeholder={t('type_message', '输入消息...')}
+          placeholder="输入消息..."
           className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <Button 

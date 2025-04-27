@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useTranslation } from 'react-i18next'
+// import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { GameGroup, getUserCreatedGroups, getUserJoinedGroups } from '@/lib/gameGroupApi'
 
@@ -223,7 +223,7 @@ const EditIcon = (props: { className?: string }) => (
 )
 
 export function GameTodoList() {
-  const { t } = useTranslation()
+  // const { t } = useTranslation()
   const [todos, setTodos] = useState<GameTodo[]>([])
   const [newTodo, setNewTodo] = useState('')
   const [loading, setLoading] = useState(true)
@@ -760,7 +760,7 @@ export function GameTodoList() {
   // 渲染游戏组选择器
   const renderGroupSelector = () => {
     if (loadingGroups) {
-      return <div className="text-sm text-gray-500">{t('loading', '加载中...')}</div>;
+      return <div className="text-sm text-gray-500">加载中...</div>;
     }
 
     const allGroups = [...userGroups, ...joinedGroups];
@@ -771,7 +771,7 @@ export function GameTodoList() {
 
     return (
       <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-500 mb-2">{t('select_group', '选择游戏组')}</h3>
+        <h3 className="text-sm font-medium text-gray-500 mb-2">选择游戏组</h3>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => {
@@ -787,7 +787,7 @@ export function GameTodoList() {
                 : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'
             }`}
           >
-            {t('personal_todos', '个人清单')}
+            个人清单
           </button>
           
           {allGroups.map(group => (
@@ -820,25 +820,25 @@ export function GameTodoList() {
       <div className="mt-3 p-4 bg-gray-50 rounded-lg space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('game_link', '游戏链接')}
+            游戏链接
           </label>
           <Input
             type="text"
             value={editForm.link}
             onChange={(e) => setEditForm({...editForm, link: e.target.value})}
-            placeholder={t('game_link_placeholder', '输入游戏链接...')}
+            placeholder="输入游戏链接..."
             className="w-full"
           />
         </div>
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('game_note', '游戏留言')}
+            游戏留言
           </label>
           <textarea
             value={editForm.note}
             onChange={(e) => setEditForm({...editForm, note: e.target.value})}
-            placeholder={t('game_note_placeholder', '输入游戏留言...')}
+            placeholder="输入游戏留言..."
             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows={3}
           />
@@ -846,13 +846,13 @@ export function GameTodoList() {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('game_price', '游戏价格')}
+            游戏价格
           </label>
           <Input
             type="number"
             value={editForm.price}
             onChange={(e) => setEditForm({...editForm, price: e.target.value})}
-            placeholder={t('game_price_placeholder', '输入游戏价格...')}
+            placeholder="输入游戏价格..."
             className="w-full"
             step="0.01"
             min="0"
@@ -861,10 +861,10 @@ export function GameTodoList() {
         
         <div className="flex justify-end gap-2 mt-4">
           <Button variant="outline" onClick={cancelEditing}>
-            {t('cancel', '取消')}
+            取消
           </Button>
           <Button onClick={() => updateTodoDetails(todo.id)}>
-            {t('save', '保存')}
+            保存
           </Button>
         </div>
       </div>
@@ -942,16 +942,16 @@ export function GameTodoList() {
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder={t('comment_placeholder', '写下你的留言...')}
+          placeholder="写下你的留言..."
           className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           rows={2}
         />
         <div className="flex justify-end gap-2 mt-2">
           <Button variant="outline" size="sm" onClick={cancelCommenting}>
-            {t('cancel', '取消')}
+            取消
           </Button>
           <Button size="sm" onClick={() => addComment(todoId)} disabled={!newComment.trim()}>
-            {t('add_comment', '添加留言')}
+            添加留言
           </Button>
         </div>
       </div>
@@ -976,7 +976,7 @@ export function GameTodoList() {
           onClick={() => startCommenting(todoId)}
           className="text-sm text-blue-600 hover:text-blue-800 mt-2"
         >
-          {t('add_first_comment', '添加第一条留言')}
+          添加第一条留言
         </button>
       );
     }
@@ -986,15 +986,15 @@ export function GameTodoList() {
         {todoComments.length > 0 && (
           <div className="space-y-2 mb-2">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium text-gray-700">{t('comments', '留言')}</h4>
+              <h4 className="text-sm font-medium text-gray-700">留言</h4>
               {hasMoreComments && (
                 <button 
                   onClick={() => toggleCommentExpand(todoId)}
                   className="text-xs text-blue-600 hover:text-blue-800"
                 >
                   {isExpanded 
-                    ? t('collapse_comments', '收起留言') 
-                    : t('expand_comments', `展开全部(${todoComments.length})`)}
+                    ? '收起留言' 
+                    : `展开全部(${todoComments.length})`}
                 </button>
               )}
             </div>
@@ -1016,7 +1016,7 @@ export function GameTodoList() {
                   onClick={() => toggleCommentExpand(todoId)}
                   className="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center"
                 >
-                  <span>{t('more_comments', `查看更多留言(${todoComments.length - MAX_VISIBLE_COMMENTS})`)}</span>
+                  <span>查看更多留言(${todoComments.length - MAX_VISIBLE_COMMENTS})</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -1033,7 +1033,7 @@ export function GameTodoList() {
             onClick={() => startCommenting(todoId)}
             className="text-sm text-blue-600 hover:text-blue-800"
           >
-            {t('add_comment', '添加留言')}
+            添加留言
           </button>
         )}
       </div>
@@ -1152,7 +1152,7 @@ export function GameTodoList() {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] flex flex-col">
           <div className="p-4 border-b">
-            <h3 className="text-lg font-medium">{t('manage_tags', '管理标签')}</h3>
+            <h3 className="text-lg font-medium">管理标签</h3>
           </div>
           
           <div className="p-4 flex-1 overflow-y-auto">
@@ -1162,10 +1162,10 @@ export function GameTodoList() {
               </div>
             ) : (
               <>
-                <h4 className="font-medium mb-2">{t('select_tags', '选择标签')}</h4>
+                <h4 className="font-medium mb-2">选择标签</h4>
                 <div className="space-y-2 mb-6">
                   {tags.length === 0 ? (
-                    <p className="text-sm text-gray-500">{t('no_tags', '没有可用的标签')}</p>
+                    <p className="text-sm text-gray-500">没有可用的标签</p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {tags.map(tag => (
@@ -1192,19 +1192,19 @@ export function GameTodoList() {
                   )}
                 </div>
                 
-                <h4 className="font-medium mb-2">{t('create_new_tag', '创建新标签')}</h4>
+                <h4 className="font-medium mb-2">创建新标签</h4>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm mb-1">{t('tag_name', '标签名称')}</label>
+                    <label className="block text-sm mb-1">标签名称</label>
                     <Input
                       value={newTagName}
                       onChange={(e) => setNewTagName(e.target.value)}
-                      placeholder={t('tag_name_placeholder', '输入标签名称')}
+                      placeholder="输入标签名称"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm mb-1">{t('tag_color', '标签颜色')}</label>
+                    <label className="block text-sm mb-1">标签颜色</label>
                     <div className="flex gap-2">
                       <Input
                         type="color"
@@ -1232,7 +1232,7 @@ export function GameTodoList() {
                     className="w-full"
                     disabled={!newTagName.trim()}
                   >
-                    {t('create_tag', '创建标签')}
+                    创建标签
                   </Button>
                 </div>
               </>
@@ -1241,10 +1241,10 @@ export function GameTodoList() {
           
           <div className="p-4 border-t bg-gray-50 flex justify-end space-x-2">
             <Button variant="outline" onClick={closeTagModal}>
-              {t('cancel', '取消')}
+              取消
             </Button>
             <Button onClick={saveTodoTags}>
-              {t('save', '保存')}
+              保存
             </Button>
           </div>
         </div>
@@ -1291,7 +1291,7 @@ export function GameTodoList() {
           onClick={() => openTagModal(todo.id)}
           className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
         >
-          {t('edit_tags', '编辑')}
+          编辑
         </button>
       </div>
     );
@@ -1300,9 +1300,9 @@ export function GameTodoList() {
   if (!user) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 mb-4">{t('todo_login_required', '请登录后查看您的待玩游戏清单')}</p>
+        <p className="text-gray-500 mb-4">请登录后查看您的待玩游戏清单</p>
         <Button asChild>
-          <a href="/signin">{t('signin', '登录')}</a>
+          <a href="/signin">登录</a>
         </Button>
       </div>
     )
@@ -1310,14 +1310,14 @@ export function GameTodoList() {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-bold mb-4">{t('todo_list_title', '待玩游戏清单')}</h2>
+      <h2 className="text-xl font-bold mb-4">待玩游戏清单</h2>
       
       <form onSubmit={addTodo} className="flex mb-6 gap-2">
         <Input
           type="text"
           value={newTodo}
           onChange={(e) => setNewTodo(e.target.value)}
-          placeholder={t('todo_add_placeholder', '添加待玩的游戏...')}
+          placeholder="添加待玩的游戏..."
           className="flex-1"
         />
         <Button type="submit" disabled={!newTodo.trim()}>
@@ -1328,7 +1328,7 @@ export function GameTodoList() {
       {renderGroupSelector()}
       
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-700">{t('sort_by', '排序方式')}</h3>
+        <h3 className="text-sm font-medium text-gray-700">排序方式</h3>
         <Button
           variant="outline"
           size="sm"
@@ -1336,8 +1336,8 @@ export function GameTodoList() {
           className="text-sm"
         >
           {sortOrder === 'rating'
-            ? t('sort_by_date', '按添加时间排序')
-            : t('sort_by_rating', '按评分排序')}
+            ? '按添加时间排序'
+            : '按评分排序'}
         </Button>
       </div>
       
@@ -1347,7 +1347,7 @@ export function GameTodoList() {
         </div>
       ) : todos.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          {t('todo_empty', '您的待玩游戏清单为空，添加一些游戏吧！')}
+          您的待玩游戏清单为空，添加一些游戏吧！
         </div>
       ) : (
         <ul className="space-y-6">
@@ -1397,8 +1397,8 @@ export function GameTodoList() {
                   <button
                     onClick={() => openTagModal(todo.id)}
                     className="text-gray-400 hover:text-blue-500 transition-colors"
-                    aria-label={t('manage_tags', '管理标签')}
-                    title={t('manage_tags', '管理标签')}
+                    aria-label="管理标签"
+                    title="管理标签"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
@@ -1407,14 +1407,14 @@ export function GameTodoList() {
                   <button
                     onClick={() => startEditing(todo)}
                     className="text-gray-400 hover:text-blue-500 transition-colors"
-                    aria-label={t('todo_edit', '编辑')}
+                    aria-label="编辑"
                   >
                     <EditIcon className="h-5 w-5" />
                   </button>
                   <button 
                     onClick={() => deleteTodo(todo.id)}
                     className="text-gray-400 hover:text-red-500 transition-colors"
-                    aria-label={t('todo_delete', '删除')}
+                    aria-label="删除"
                   >
                     <TrashIcon className="h-5 w-5" />
                   </button>
@@ -1433,7 +1433,7 @@ export function GameTodoList() {
                 <>
                   <div className="ml-7 mt-3">
                     <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors p-3 rounded-lg shadow-sm">
-                      <span className="text-sm font-medium text-gray-600 mr-3">{t('rating', '评分')}:</span>
+                      <span className="text-sm font-medium text-gray-600 mr-3">评分:</span>
                       <div className="flex-grow">
                         <RatingStars 
                           rating={todo.rating} 
@@ -1447,7 +1447,7 @@ export function GameTodoList() {
                         </span>
                       ) : (
                         <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
-                          {t('not_rated', '未评分')}
+                          未评分
                         </span>
                       )}
                     </div>

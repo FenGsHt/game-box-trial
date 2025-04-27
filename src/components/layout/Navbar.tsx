@@ -2,7 +2,8 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { useTranslation } from 'react-i18next'
+// 移除国际化
+// import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { getProfile } from '@/lib/profileApi'
 
@@ -95,7 +96,8 @@ const TodoListIcon = (props: IconProps) => (
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { t, i18n } = useTranslation();
+  // 移除国际化
+  // const { t, i18n } = useTranslation();
   const [user, setUser] = useState<{email?: string} | null>(null);
   const [profile, setProfile] = useState<{ username?: string } | null>(null);
 
@@ -118,9 +120,10 @@ export function Navbar() {
     setIsMenuOpen(!isMenuOpen)
   }
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
+  // 移除语言切换功能
+  // const changeLanguage = (lng: string) => {
+  //   i18n.changeLanguage(lng);
+  // };
 
   return (
     <nav className="bg-white/90 backdrop-blur shadow-sm py-3 fixed w-full top-0 z-50 border-b border-gray-100">
@@ -135,13 +138,8 @@ export function Navbar() {
         {/* 桌面导航 */}
         <div className="hidden md:flex items-center space-x-8">
           <div className="flex space-x-4">
-            {/* <Link href="/" className="nav-link">{t('home')}</Link> */}
-            {/* <Link href="/store" className="nav-link">{t('store')}</Link> */}
-            {/* <Link href="/categories" className="nav-link">{t('categories')}</Link> */}
-            {/* <Link href="/library" className="nav-link">{t('games')}</Link> */}
-            {/* <Link href="/community" className="nav-link">{t('community')}</Link> */}
-            <Link href="/todo-list" className="nav-link">{t('todo_list', '待玩清单')}</Link>
-            <Link href="/group-manager" className="nav-link">{t('group_manager', '游戏组')}</Link>
+            <Link href="/todo-list" className="nav-link">待玩清单</Link>
+            <Link href="/group-manager" className="nav-link">游戏组</Link>
           </div>
           <div className="flex items-center space-x-3 ml-6">
             <Link href="/todo-list" className="relative group flex-shrink-0">
@@ -153,7 +151,7 @@ export function Navbar() {
             </Link>
             {!user ? (
               <Button variant="default" size="sm" asChild>
-                <Link href="/signin">{t('login')}/{t('register')}</Link>
+                <Link href="/signin">登录/注册</Link>
               </Button>
             ) : (
               <div className="flex items-center gap-2">
@@ -161,16 +159,18 @@ export function Navbar() {
                   {profile?.username ? `${profile.username}（${user.email}）` : user.email}
                 </span>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/profile">{t('profile_center', '个人中心')}</Link>
+                  <Link href="/profile">个人中心</Link>
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleLogout}>{t('logout')}</Button>
+                <Button variant="outline" size="sm" onClick={handleLogout}>退出</Button>
               </div>
             )}
+            {/* 移除语言切换按钮
             <div className="ml-2 flex items-center gap-1 bg-gray-100 rounded px-2 py-1">
               <button onClick={() => changeLanguage('zh')} className="text-xs font-medium text-gray-700 hover:text-blue-600 focus:outline-none">中</button>
               <span className="text-gray-400">|</span>
               <button onClick={() => changeLanguage('en')} className="text-xs font-medium text-gray-700 hover:text-blue-600 focus:outline-none">EN</button>
             </div>
+            */}
           </div>
         </div>
 
@@ -178,7 +178,7 @@ export function Navbar() {
         <div className="flex items-center md:hidden space-x-2">
           {!user ? (
             <Button variant="default" size="sm" asChild>
-              <Link href="/signin">{t('login')}/{t('register')}</Link>
+              <Link href="/signin">登录/注册</Link>
             </Button>
           ) : (
             <span className="text-gray-700 text-sm font-medium">
@@ -202,25 +202,12 @@ export function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden px-4 py-4 bg-white border-t">
           <div className="flex flex-col space-y-4">
-            {/* <Link href="/" className="nav-link py-2" onClick={toggleMenu}>{t('home')}</Link> */}
-            {/* <Link href="/store" className="nav-link py-2" onClick={toggleMenu}>{t('store')}</Link> */}
-            {/* <Link href="/categories" className="nav-link py-2" onClick={toggleMenu}>{t('categories')}</Link> */}
-            {/* <Link href="/library" className="nav-link py-2" onClick={toggleMenu}>{t('games')}</Link> */}
-            {/* <Link href="/community" className="nav-link py-2" onClick={toggleMenu}>{t('community')}</Link> */}
-            <Link href="/todo-list" className="nav-link py-2" onClick={toggleMenu}>{t('todo_list', '待玩清单')}</Link>
-            <Link href="/group-manager" className="nav-link py-2" onClick={toggleMenu}>{t('group_manager', '游戏组')}</Link>
+            <Link href="/todo-list" className="nav-link py-2" onClick={toggleMenu}>待玩清单</Link>
+            <Link href="/group-manager" className="nav-link py-2" onClick={toggleMenu}>游戏组</Link>
             <div className="flex items-center justify-between py-2">
-              {/* <Link href="/todo-list" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
-                <TodoListIcon className="h-5 w-5" />
-                <span>{t('todo_list', '待玩清单')}</span>
-              </Link> */}
-              {/* <Link href="/cart" onClick={toggleMenu} className="flex items-center space-x-2 text-gray-700">
-                <CartIcon className="h-5 w-5" />
-                <span>{t('cart')}</span>
-              </Link> */}
               {!user ? (
                 <Button variant="default" size="sm" asChild>
-                  <Link href="/signin">{t('login')}/{t('register')}</Link>
+                  <Link href="/signin">登录/注册</Link>
                 </Button>
               ) : (
                 <div className="flex flex-col items-start gap-1">
@@ -229,17 +216,19 @@ export function Navbar() {
                   </span>
                   <div className="flex gap-2 mt-5">
                     <Button variant="outline" size="sm" asChild>
-                      <Link href="/profile">{t('profile_center', '个人中心')}</Link>
+                      <Link href="/profile">个人中心</Link>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleLogout}>{t('logout')}</Button>
+                    <Button variant="outline" size="sm" onClick={handleLogout}>退出</Button>
                   </div>
                 </div>
               )}
+              {/* 移除语言切换按钮
               <div className="ml-2 flex items-center gap-1 bg-gray-100 rounded px-2 py-1">
                 <button onClick={() => changeLanguage('zh')} className="text-xs font-medium text-gray-700 hover:text-blue-600 focus:outline-none">中</button>
                 <span className="text-gray-400">|</span>
                 <button onClick={() => changeLanguage('en')} className="text-xs font-medium text-gray-700 hover:text-blue-600 focus:outline-none">EN</button>
               </div>
+              */}
             </div>
           </div>
         </div>
@@ -247,9 +236,6 @@ export function Navbar() {
       <style jsx global>{`
         .nav-link {
           @apply text-gray-700 hover:text-blue-600 transition-colors font-medium px-2 py-1 rounded-lg hover:bg-blue-50 active:bg-blue-100;
-        }
-        .nav-link[aria-current="page"] {
-          @apply text-blue-700 font-bold;
         }
       `}</style>
     </nav>
