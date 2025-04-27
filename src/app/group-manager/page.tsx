@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-// import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
@@ -17,7 +16,6 @@ import {
 } from '@/lib/gameGroupApi'
 
 export default function GroupManagerPage() {
-  // const { t } = useTranslation()
   const [userGroups, setUserGroups] = useState<GameGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ id?: string } | null>(null)
@@ -231,31 +229,31 @@ export default function GroupManagerPage() {
           <form onSubmit={handleCreateGroup} className="mb-6">
             <div className="mb-3">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('group_name', '组名称')}
+                组名称
               </label>
               <Input
                 type="text"
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder={t('group_name_placeholder', '输入组名称...')}
+                placeholder="输入组名称..."
                 className="w-full"
               />
             </div>
             
             <div className="mb-3">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('group_description', '组描述')}
+                组描述
               </label>
               <textarea
                 value={newGroupDescription}
                 onChange={(e) => setNewGroupDescription(e.target.value)}
-                placeholder={t('group_description_placeholder', '输入组描述...')}
+                placeholder="输入组描述..."
                 className="w-full h-20 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             
             <Button type="submit" disabled={isCreatingGroup || !newGroupName.trim()}>
-              {isCreatingGroup ? t('creating', '创建中...') : t('create_group', '创建游戏组')}
+              {isCreatingGroup ? '创建中...' : '创建游戏组'}
             </Button>
           </form>
           
@@ -266,7 +264,7 @@ export default function GroupManagerPage() {
             </div>
           ) : userGroups.length === 0 ? (
             <div className="text-center py-4 text-gray-500">
-              {t('no_groups', '您还没有创建任何游戏组')}
+              您还没有创建任何游戏组
             </div>
           ) : (
             <ul className="space-y-2">
