@@ -123,7 +123,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
   // 滚动到底部
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto' })
     }
   }, [messages])
 
@@ -184,7 +184,14 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                   {msg.sender_id === (user?.id || 'guest') ? '你' : msg.sender_name}
                 </span>
                 <span className="text-xs text-gray-400 ml-2">
-                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(msg.created_at).toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}
                 </span>
               </div>
               <div 
