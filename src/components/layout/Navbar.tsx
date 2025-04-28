@@ -8,9 +8,141 @@ import { supabase } from '@/lib/supabase'
 import { getProfile } from '@/lib/profileApi'
 import { useNotifications } from '@/lib/NotificationContext'
 
+// 定义Profile接口
+interface Profile {
+  username?: string;
+  email?: string;
+  id?: string;
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  // 使用索引签名但限制为string类型
+  [key: string]: string | undefined;
+}
+
 interface IconProps {
   className?: string;
 }
+
+// 自定义图标组件
+const HomeIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2" 
+    />
+  </svg>
+)
+
+const BookmarkSquareIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" 
+    />
+  </svg>
+)
+
+const UsersIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" 
+    />
+  </svg>
+)
+
+const UserCircleIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
+    />
+  </svg>
+)
+
+const ArrowRightOnRectangleIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" 
+    />
+  </svg>
+)
+
+const UserPlusIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" 
+    />
+  </svg>
+)
+
+const UserIcon = (props: IconProps) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+    />
+  </svg>
+)
 
 // 矢量图标组件
 const CartIcon = (props: IconProps) => (
@@ -100,9 +232,30 @@ export function Navbar() {
   // 移除国际化
   // const { t, i18n } = useTranslation();
   const [user, setUser] = useState<{email?: string} | null>(null);
-  const [profile, setProfile] = useState<{ username?: string } | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   // 使用通知上下文
   const { unreadTodos, markTodosAsRead } = useNotifications();
+
+  // 添加点击外部关闭菜单的处理程序
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // 检查点击目标是否是菜单或菜单按钮的子元素
+      if (!target.closest('.mobile-menu') && !target.closest('.menu-button')) {
+        setIsMenuOpen(false);
+      }
+    };
+    
+    // 添加全局点击事件监听器
+    document.addEventListener('click', handleOutsideClick);
+    
+    // 清除监听器
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [isMenuOpen]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user));
@@ -177,38 +330,20 @@ export function Navbar() {
                 <Button variant="outline" size="sm" onClick={handleLogout}>退出</Button>
               </div>
             )}
-            {/* 移除语言切换按钮
-            <div className="ml-2 flex items-center gap-1 bg-gray-100 rounded px-2 py-1">
-              <button onClick={() => changeLanguage('zh')} className="text-xs font-medium text-gray-700 hover:text-blue-600 focus:outline-none">中</button>
-              <span className="text-gray-400">|</span>
-              <button onClick={() => changeLanguage('en')} className="text-xs font-medium text-gray-700 hover:text-blue-600 focus:outline-none">EN</button>
-            </div>
-            */}
           </div>
         </div>
 
-        {/* 移动端登录按钮和菜单按钮同一行 */}
-        <div className="flex items-center md:hidden space-x-2">
-          {!user ? (
-            <Button variant="default" size="sm" asChild>
-              <Link href="/signin">登录/注册</Link>
-            </Button>
-          ) : (
-            <span className="text-gray-700 text-sm font-medium relative">
-              {profile?.username ? `${profile.username}` : user.email}
-              {unreadTodos > 0 && (
-                <span className="absolute top-0 -right-2 bg-red-500 h-2 w-2 rounded-full"></span>
-              )}
-            </span>
-          )}
-          <button 
-            className="text-gray-600 ml-2"
+        {/* 移动端菜单按钮 */}
+        <div className="md:hidden">
+          <button
             onClick={toggleMenu}
+            className="p-2 rounded-md text-gray-600 focus:outline-none menu-button"
+            aria-label="菜单"
           >
             {isMenuOpen ? (
-              <CloseIcon className="h-7 w-7" />
+              <CloseIcon className="h-6 w-6" />
             ) : (
-              <MenuIcon className="h-7 w-7" />
+              <MenuIcon className="h-6 w-6" />
             )}
           </button>
         </div>
@@ -216,56 +351,74 @@ export function Navbar() {
 
       {/* 移动端菜单 */}
       {isMenuOpen && (
-        <div className="md:hidden px-4 py-4 bg-white border-t">
-          <div className="flex flex-col space-y-4">
-            <Link href="/todo-list" 
-              className="nav-link py-2 flex items-center justify-between" 
-              onClick={() => {
-                markTodosAsRead();
-                toggleMenu();
-              }}>
-              <span>待玩清单</span>
-              {unreadTodos > 0 && (
-                <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {unreadTodos}
-                </span>
-              )}
+        <div className="md:hidden mobile-menu">
+          <div className="px-2 pt-2 pb-4 space-y-1 bg-white shadow-lg border-t border-gray-100">
+            <Link href="/" 
+              className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 flex items-center space-x-2"
+              onClick={() => setIsMenuOpen(false)}>
+              <HomeIcon className="h-5 w-5 text-blue-600" />
+              <span>首页</span>
             </Link>
-            <Link href="/group-manager" className="nav-link py-2" onClick={toggleMenu}>游戏组</Link>
-            <div className="flex items-center justify-between py-2">
-              {!user ? (
-                <Button variant="default" size="sm" asChild>
-                  <Link href="/signin">登录/注册</Link>
-                </Button>
-              ) : (
-                <div className="flex flex-col items-start gap-1">
-                  <span className="text-gray-700 text-sm font-medium">
-                    {profile?.username ? `${profile.username}(${user.email})` : user.email}
-                  </span>
-                  <div className="flex gap-2 mt-5">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href="/profile">个人中心</Link>
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleLogout}>退出</Button>
-                  </div>
-                </div>
-              )}
-              {/* 移除语言切换按钮
-              <div className="ml-2 flex items-center gap-1 bg-gray-100 rounded px-2 py-1">
-                <button onClick={() => changeLanguage('zh')} className="text-xs font-medium text-gray-700 hover:text-blue-600 focus:outline-none">中</button>
-                <span className="text-gray-400">|</span>
-                <button onClick={() => changeLanguage('en')} className="text-xs font-medium text-gray-700 hover:text-blue-600 focus:outline-none">EN</button>
-              </div>
-              */}
-            </div>
+            <Link href="/todo-list" 
+              className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 flex items-center space-x-2"
+              onClick={() => {
+                setIsMenuOpen(false);
+                markTodosAsRead();
+              }}>
+              <BookmarkSquareIcon className="h-5 w-5 text-blue-600" />
+              <span className="relative">
+                待玩清单
+                {unreadTodos > 0 && (
+                  <span className="absolute top-0 -right-2 bg-red-500 h-2 w-2 rounded-full"></span>
+                )}
+              </span>
+            </Link>
+            <Link href="/group-manager" 
+              className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 flex items-center space-x-2"
+              onClick={() => setIsMenuOpen(false)}>
+              <UsersIcon className="h-5 w-5 text-blue-600" />
+              <span>游戏组</span>
+            </Link>
+            <div className="border-t border-gray-200 my-2"></div>
+            
+            {/* 用户认证区域 */}
+            {!user ? (
+              <>
+                <Link href="/signin" 
+                  className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 flex items-center space-x-2"
+                  onClick={() => setIsMenuOpen(false)}>
+                  <UserIcon className="h-5 w-5 text-blue-600" />
+                  <span>登录</span>
+                </Link>
+                <Link href="/signup" 
+                  className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 flex items-center space-x-2"
+                  onClick={() => setIsMenuOpen(false)}>
+                  <UserPlusIcon className="h-5 w-5 text-blue-600" />
+                  <span>注册</span>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/profile" 
+                  className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 flex items-center space-x-2"
+                  onClick={() => setIsMenuOpen(false)}>
+                  <UserCircleIcon className="h-5 w-5 text-blue-600" />
+                  <span>个人中心</span>
+                </Link>
+                <button
+                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 flex items-center space-x-2"
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}>
+                  <ArrowRightOnRectangleIcon className="h-5 w-5 text-blue-600" />
+                  <span>退出</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
-      <style jsx global>{`
-        .nav-link {
-          @apply text-gray-700 hover:text-blue-600 transition-colors font-medium px-2 py-1 rounded-lg hover:bg-blue-50 active:bg-blue-100;
-        }
-      `}</style>
     </nav>
   )
 } 
