@@ -32,6 +32,7 @@ export interface GameComment {
   created_at: string
   user_email?: string
   user_username?: string
+  user_profile_name?: string  // 添加从profiles表获取的名称
 }
 
 // 游戏标签类型
@@ -521,7 +522,30 @@ export function GameTodoList() {
           // 获取所有用户ID
           const userIds = [...new Set(data.map(comment => comment.user_id))];
           
-          // 从users表获取用户信息
+          // 首先从profiles表获取用户信息
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, username, email')
+            .in('id', userIds);
+            
+          if (profilesError) {
+            console.error('获取用户profiles失败:', profilesError);
+          }
+          
+          // 创建profiles信息映射
+          const profilesMap: Record<string, { username?: string, email?: string }> = {};
+          
+          // 从profiles表填充用户信息
+          if (profilesData) {
+            profilesData.forEach((profile: { id: string, username?: string, email?: string }) => {
+              profilesMap[profile.id] = { 
+                username: profile.username, 
+                email: profile.email 
+              };
+            });
+          }
+          
+          // 从users表获取用户信息（作为备用）
           const { data: userData, error: userError } = await supabase
             .from('users')
             .select('id, email, username')
@@ -531,9 +555,6 @@ export function GameTodoList() {
             console.error('获取用户信息失败:', userError);
           }
 
-          // 我们不再尝试从auth.users获取邮箱信息，因为这需要特殊权限
-          // 相反，我们依赖于已在users表中的数据
-          
           // 创建用户信息映射
           const userMap: Record<string, { email?: string, username?: string }> = {};
           
@@ -544,10 +565,11 @@ export function GameTodoList() {
             });
           }
           
-          // 合并留言和用户信息
+          // 合并留言和用户信息，优先使用profiles表中的信息
           const enhancedComments = data.map((comment): GameComment => ({
             ...comment,
-            user_email: userMap[comment.user_id]?.email,
+            user_profile_name: profilesMap[comment.user_id]?.username,
+            user_email: profilesMap[comment.user_id]?.email || userMap[comment.user_id]?.email,
             user_username: userMap[comment.user_id]?.username
           }));
           
@@ -583,26 +605,44 @@ export function GameTodoList() {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newComment = payload.new as GameComment;
-            // 为新留言获取用户信息
+            
+            // 首先从profiles表获取用户信息
             supabase
-              .from('users')
-              .select('email, username')
+              .from('profiles')
+              .select('name, email')
               .eq('id', newComment.user_id)
               .single()
-              .then(({ data: userData }) => {
-                if (userData) {
-                  newComment.user_email = userData.email;
-                  newComment.user_username = userData.username;
+              .then(({ data: profileData }) => {
+                if (profileData) {
+                  newComment.user_profile_name = profileData.name;
+                  newComment.user_email = profileData.email;
                 }
                 
-                setComments(current => {
-                  const updated = { ...current };
-                  if (!updated[newComment.game_todo_id]) {
-                    updated[newComment.game_todo_id] = [];
-                  }
-                  updated[newComment.game_todo_id] = [...updated[newComment.game_todo_id], newComment];
-                  return updated;
-                });
+                // 无论profiles表是否有数据，都尝试从users表获取补充信息
+                supabase
+                  .from('users')
+                  .select('email, username')
+                  .eq('id', newComment.user_id)
+                  .single()
+                  .then(({ data: userData }) => {
+                    if (userData) {
+                      // 只有在profiles没有提供email时才使用users表的email
+                      if (!newComment.user_email) {
+                        newComment.user_email = userData.email;
+                      }
+                      newComment.user_username = userData.username;
+                    }
+                    
+                    // 更新评论列表
+                    setComments(current => {
+                      const updated = { ...current };
+                      if (!updated[newComment.game_todo_id]) {
+                        updated[newComment.game_todo_id] = [];
+                      }
+                      updated[newComment.game_todo_id] = [...updated[newComment.game_todo_id], newComment];
+                      return updated;
+                    });
+                  });
               });
           }
         }
@@ -1083,7 +1123,8 @@ export function GameTodoList() {
             </div>
             
             {visibleComments.map(comment => {
-              const displayName = comment.user_username || (comment.user_email ? comment.user_email.split('@')[0] : null) || (comment.user_id === user?.id ? '我' : '用户');
+              // 优先使用profiles表中的name字段，其次是users表中的username，再次是email
+              const displayName = comment.user_profile_name || comment.user_username || comment.user_email || (comment.user_id === user?.id ? '我' : '用户');
               return (
                 <div key={comment.id} className="text-sm bg-gray-50 p-2 rounded-md flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="font-medium text-blue-700">{displayName}:</span>
