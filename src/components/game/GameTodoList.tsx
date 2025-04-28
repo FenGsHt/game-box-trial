@@ -13,7 +13,7 @@ export interface GameTodo {
   id: string
   title: string
   is_completed: boolean
-  rating?: number  // 游戏评分，1-5分，支持半星
+  avg_rating?: number  // 平均评分，1-5分，支持半星
   user_id: string
   group_id?: string // 所属游戏组ID
   created_at: string
@@ -41,6 +41,15 @@ export interface GameTag {
   color: string   // 标签颜色
   created_at: string
   creator_id?: string // 创建者ID
+}
+
+// 游戏评分类型
+export interface GameRating {
+  id: string
+  game_todo_id: string
+  user_id: string
+  rating: number
+  rated_at: string
 }
 
 // 添加图标
@@ -136,6 +145,42 @@ const StarHalfIcon = (props: { className?: string }) => (
   </svg>
 )
 
+// 搜索图标
+const SearchIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+    />
+  </svg>
+)
+
+// 排序图标
+const SortIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M3 4h13M3 8h9M3 12h9M3 16h9M3 20h9m6-16l4 4m0 0l4-4m-4 4v16" 
+    />
+  </svg>
+)
+
 // 评分选择组件
 const RatingStars = ({ 
   rating, 
@@ -170,7 +215,7 @@ const RatingStars = ({
     }
     
     // 空星
-    return <StarEmptyIcon className={`${starSizeClass} text-gray-300 hover:text-amber-200`} />;
+    return <StarEmptyIcon className={`${starSizeClass} ${readOnly ? 'text-gray-300' : 'text-gray-300 hover:text-amber-200'}`} />;
   };
   
   return (
@@ -178,7 +223,7 @@ const RatingStars = ({
       {[1, 2, 3, 4, 5].map((star) => (
         <div 
           key={star} 
-          className={`relative ${readOnly ? '' : 'cursor-pointer'} mx-0.5 hover:scale-110 transition-transform`}
+          className={`relative ${readOnly ? '' : 'cursor-pointer'} mx-0.5 ${readOnly ? '' : 'hover:scale-110 transition-transform'}`}
           onClick={() => !readOnly && onChange && onChange(star)}
         >
           {/* 整星 */}
@@ -187,16 +232,14 @@ const RatingStars = ({
           </div>
           
           {/* 半星选择区域 - 只有在非只读模式下显示 */}
-          {!readOnly && (
+          {!readOnly && onChange && (
             <div 
               className="absolute top-0 left-0 w-1/2 h-full z-10 hover:bg-blue-100/10"
               onClick={(e) => {
                 e.stopPropagation();
-                if (onChange) {
-                  onChange(star - 0.5);
-                }
+                onChange(star - 0.5);
               }}
-            ></div>
+            />
           )}
         </div>
       ))}
@@ -245,7 +288,6 @@ export function GameTodoList() {
   const [comments, setComments] = useState<Record<string, GameComment[]>>({})
   const [newComment, setNewComment] = useState('')
   const [commentingTodo, setCommentingTodo] = useState<string | null>(null)
-  const [sortOrder, setSortOrder] = useState<'default' | 'rating'>('default')
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
   const [tags, setTags] = useState<GameTag[]>([])
   const [loadingTags, setLoadingTags] = useState(false)
@@ -255,6 +297,10 @@ export function GameTodoList() {
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('#3B82F6') // 默认蓝色
   const [tagError, setTagError] = useState('')
+  const [userRatings, setUserRatings] = useState<Record<string, number>>({}) // 用户对每个游戏的评分
+  const [searchTerm, setSearchTerm] = useState<string>("")
+  const [sortOption, setSortOption] = useState<string>("default")
+  const [sortedTodos, setSortedTodos] = useState<GameTodo[]>([])
 
   // 获取用户信息
   useEffect(() => {
@@ -357,10 +403,10 @@ export function GameTodoList() {
         
         // 根据排序方式排序结果
         const sortedData = [...(data || [])]
-        if (sortOrder === 'rating') {
+        if (sortOption === 'rating') {
           sortedData.sort((a, b) => {
-            const ratingA = a.rating || 0
-            const ratingB = b.rating || 0
+            const ratingA = a.avg_rating || 0
+            const ratingB = b.avg_rating || 0
             return ratingB - ratingA // 从高到低排序
           })
         } else {
@@ -371,6 +417,29 @@ export function GameTodoList() {
         }
         
         setTodos(sortedData)
+
+        // 获取当前用户对这些游戏的评分
+        if (data && data.length > 0 && user?.id) {
+          const todoIds = data.map(todo => todo.id);
+          const { data: ratingsData, error: ratingsError } = await supabase
+            .from('game_ratings')
+            .select('*')
+            .eq('user_id', user.id)
+            .in('game_todo_id', todoIds);
+          
+          if (ratingsError) {
+            console.error('获取用户评分失败:', ratingsError);
+            return;
+          }
+
+          // 将评分数据转换为以游戏ID为键的对象
+          const userRatingsMap: Record<string, number> = {};
+          ratingsData?.forEach(rating => {
+            userRatingsMap[rating.game_todo_id] = rating.rating;
+          });
+          
+          setUserRatings(userRatingsMap);
+        }
       } catch (error) {
         console.error('获取待玩游戏列表异常:', error)
       } finally {
@@ -418,7 +487,7 @@ export function GameTodoList() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [user?.id, selectedGroup, sortOrder]);
+  }, [user?.id, selectedGroup, sortOption]);
 
   // 加载游戏留言
   useEffect(() => {
@@ -653,7 +722,6 @@ export function GameTodoList() {
       const newTodoItem = {
         title: newTodo.trim(),
         is_completed: false,
-        rating: 0, // 默认评分为0
         user_id: user.id,
         group_id: selectedGroup?.id || null // 添加到当前选择的组
       }
@@ -690,18 +758,34 @@ export function GameTodoList() {
   }
 
   // 更新游戏评分
-  const updateRating = async (id: string, rating: number) => {
+  const updateRating = async (todoId: string, rating: number) => {
+    if (!user?.id) return;
+    
     try {
+      // 添加或更新用户对游戏的评分
       const { error } = await supabase
-        .from('game_todos')
-        .update({ rating })
-        .eq('id', id)
+        .from('game_ratings')
+        .upsert({
+          game_todo_id: todoId,
+          user_id: user.id,
+          rating,
+          rated_at: new Date().toISOString()
+        }, {
+          onConflict: 'game_todo_id,user_id'
+        });
       
       if (error) {
-        console.error('更新游戏评分失败:', error)
+        console.error('更新游戏评分失败:', error);
+        return;
       }
+      
+      // 更新本地状态
+      setUserRatings(prev => ({
+        ...prev,
+        [todoId]: rating
+      }));
     } catch (error) {
-      console.error('更新游戏评分异常:', error)
+      console.error('更新游戏评分异常:', error);
     }
   }
 
@@ -924,11 +1008,6 @@ export function GameTodoList() {
   const cancelCommenting = () => {
     setCommentingTodo(null);
     setNewComment('');
-  };
-
-  // 切换排序方式
-  const toggleSortOrder = () => {
-    setSortOrder(current => current === 'default' ? 'rating' : 'default');
   };
 
   // 切换留言展开/折叠状态
@@ -1301,6 +1380,59 @@ export function GameTodoList() {
     );
   };
 
+  // 处理排序逻辑
+  const sortTodos = (todos: GameTodo[], option: string) => {
+    const sortedList = [...todos];
+    
+    switch (option) {
+      case "avg_rating_high":
+        sortedList.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+        break;
+      case "avg_rating_low":
+        sortedList.sort((a, b) => (a.avg_rating || 0) - (b.avg_rating || 0));
+        break;
+      case "my_rating_high":
+        sortedList.sort((a, b) => {
+          const ratingA = userRatings[a.id] || 0;
+          const ratingB = userRatings[b.id] || 0;
+          return ratingB - ratingA;
+        });
+        break;
+      case "my_rating_low":
+        sortedList.sort((a, b) => {
+          const ratingA = userRatings[a.id] || 0;
+          const ratingB = userRatings[b.id] || 0;
+          return ratingA - ratingB;
+        });
+        break;
+      case "name_asc":
+        sortedList.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "name_desc":
+        sortedList.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      default: // 默认按最新添加排序
+        sortedList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+    }
+    
+    return sortedList;
+  };
+
+  // 过滤并排序游戏列表
+  useEffect(() => {
+    // 先过滤，再排序
+    let filteredList = todos;
+    if (searchTerm) {
+      filteredList = todos.filter(todo => 
+        todo.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    const sorted = sortTodos(filteredList, sortOption);
+    setSortedTodos(sorted);
+  }, [todos, searchTerm, sortOption, userRatings]);
+
   if (!user) {
     return (
       <div className="text-center py-8">
@@ -1331,18 +1463,39 @@ export function GameTodoList() {
       
       {renderGroupSelector()}
       
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-700">排序方式</h3>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleSortOrder}
-          className="text-sm"
-        >
-          {sortOrder === 'rating'
-            ? '按添加时间排序'
-            : '按评分排序'}
-        </Button>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex gap-2">
+          <div className="relative flex-grow">
+            <Input
+              placeholder="搜索游戏..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-full"
+            />
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <SearchIcon className="h-5 w-5" />
+            </div>
+          </div>
+        
+          <div className="relative min-w-[180px]">
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+              className="h-10 w-full rounded-md border border-gray-300 bg-white pl-10 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+            >
+              <option value="default">最新添加</option>
+              <option value="avg_rating_high">平均评分 (高→低)</option>
+              <option value="avg_rating_low">平均评分 (低→高)</option>
+              <option value="my_rating_high">我的评分 (高→低)</option>
+              <option value="my_rating_low">我的评分 (低→高)</option>
+              <option value="name_asc">名称 (A→Z)</option>
+              <option value="name_desc">名称 (Z→A)</option>
+            </select>
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <SortIcon className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
       </div>
       
       {loading ? (
@@ -1355,7 +1508,7 @@ export function GameTodoList() {
         </div>
       ) : (
         <ul className="space-y-6">
-          {todos.map((todo) => (
+          {sortedTodos.map((todo) => (
             <li key={todo.id} className="flex flex-col border-b pb-4 mb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -1437,17 +1590,17 @@ export function GameTodoList() {
                 <>
                   <div className="ml-7 mt-3">
                     <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors p-3 rounded-lg shadow-sm">
-                      <span className="text-sm font-medium text-gray-600 mr-3">评分:</span>
+                      <span className="text-sm font-medium text-gray-600 mr-3">我的评分:</span>
                       <div className="flex-grow">
                         <RatingStars 
-                          rating={todo.rating} 
+                          rating={userRatings[todo.id] || 0}
                           onChange={(newRating) => updateRating(todo.id, newRating)}
                           size="md"
                         />
                       </div>
-                      {todo.rating ? (
+                      {userRatings[todo.id] ? (
                         <span className="ml-2 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                          {todo.rating}
+                          {userRatings[todo.id].toFixed(1)}
                         </span>
                       ) : (
                         <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
@@ -1455,6 +1608,22 @@ export function GameTodoList() {
                         </span>
                       )}
                     </div>
+                    
+                    {(todo.group_id && todo.avg_rating && todo.avg_rating > 0) && (
+                      <div className="flex items-center mt-2 bg-gray-50 p-3 rounded-lg shadow-sm">
+                        <span className="text-sm font-medium text-gray-600 mr-3">组内平均分:</span>
+                        <div className="flex-grow">
+                          <RatingStars 
+                            rating={todo.avg_rating}
+                            readOnly={true}
+                            size="md"
+                          />
+                        </div>
+                        <span className="ml-2 text-sm font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                          {todo.avg_rating.toFixed(1)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="ml-7 mt-2">
