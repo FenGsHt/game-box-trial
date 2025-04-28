@@ -334,7 +334,25 @@ export function Navbar() {
         </div>
 
         {/* 移动端菜单按钮 */}
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center">
+          {user && (
+            <div className="flex items-center mr-3">
+              <Link href="/todo-list" 
+                className="relative mr-3"
+                onClick={() => markTodosAsRead()}>
+                <TodoListIcon className="h-5 w-5 text-gray-600" />
+                {unreadTodos > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 h-2 w-2 rounded-full"></span>
+                )}
+              </Link>
+              <Link href="/profile" className="relative">
+                <UserCircleIcon className="h-5 w-5 text-gray-600" />
+                {profile && (
+                  <span className="absolute bottom-0 right-0 bg-green-500 h-2 w-2 rounded-full border border-white"></span>
+                )}
+              </Link>
+            </div>
+          )}
           <button
             onClick={toggleMenu}
             className="p-2 rounded-md text-gray-600 focus:outline-none menu-button"
