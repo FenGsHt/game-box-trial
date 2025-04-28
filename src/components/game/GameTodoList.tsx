@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 // import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { GameGroup, getUserCreatedGroups, getUserJoinedGroups } from '@/lib/gameGroupApi'
+import { useNotifications } from '@/lib/NotificationContext'
 
 // 待玩游戏项类型
 export interface GameTodo {
@@ -302,6 +303,8 @@ export function GameTodoList() {
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [sortOption, setSortOption] = useState<string>("default")
   const [sortedTodos, setSortedTodos] = useState<GameTodo[]>([])
+  // 获取通知上下文
+  const { markTodosAsRead } = useNotifications();
 
   // 获取用户信息
   useEffect(() => {
@@ -383,6 +386,10 @@ export function GameTodoList() {
     const fetchTodos = async () => {
       try {
         setLoading(true)
+        
+        // 标记所有未读游戏为已读
+        await markTodosAsRead();
+        
         let query = supabase
           .from('game_todos')
           .select('*')

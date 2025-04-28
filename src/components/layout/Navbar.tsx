@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 // import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { getProfile } from '@/lib/profileApi'
+import { useNotifications } from '@/lib/NotificationContext'
 
 interface IconProps {
   className?: string;
@@ -100,6 +101,8 @@ export function Navbar() {
   // const { t, i18n } = useTranslation();
   const [user, setUser] = useState<{email?: string} | null>(null);
   const [profile, setProfile] = useState<{ username?: string } | null>(null);
+  // 使用通知上下文
+  const { unreadTodos, markTodosAsRead } = useNotifications();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user));
@@ -138,12 +141,19 @@ export function Navbar() {
         {/* 桌面导航 */}
         <div className="hidden md:flex items-center space-x-8">
           <div className="flex space-x-4">
-            <Link href="/todo-list" className="nav-link">待玩清单</Link>
+            <Link href="/todo-list" 
+              className="nav-link"
+              onClick={() => markTodosAsRead()}>待玩清单</Link>
             <Link href="/group-manager" className="nav-link">游戏组</Link>
           </div>
           <div className="flex items-center space-x-3 ml-6">
-            <Link href="/todo-list" className="relative group flex-shrink-0">
+            <Link href="/todo-list" 
+              className="relative group flex-shrink-0"
+              onClick={() => markTodosAsRead()}>
               <TodoListIcon className="h-6 w-6 text-gray-500 group-hover:text-blue-600 transition-colors" />
+              {unreadTodos > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 h-3 w-3 rounded-full border border-white animate-pulse"></span>
+              )}
             </Link>
             <Link href="/cart" className="relative group flex-shrink-0 ml-2 md:ml-0">
               <CartIcon className="h-6 w-6 text-gray-500 group-hover:text-blue-600 transition-colors" />
@@ -155,8 +165,11 @@ export function Navbar() {
               </Button>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-gray-700 text-sm font-medium">
+                <span className="text-gray-700 text-sm font-medium relative">
                   {profile?.username ? `${profile.username}（${user.email}）` : user.email}
+                  {unreadTodos > 0 && (
+                    <span className="absolute top-0 -right-2 bg-red-500 h-2 w-2 rounded-full"></span>
+                  )}
                 </span>
                 <Button variant="outline" size="sm" asChild>
                   <Link href="/profile">个人中心</Link>
@@ -181,8 +194,11 @@ export function Navbar() {
               <Link href="/signin">登录/注册</Link>
             </Button>
           ) : (
-            <span className="text-gray-700 text-sm font-medium">
-              {profile?.username ? `${profile.username}（${user.email}）` : user.email}
+            <span className="text-gray-700 text-sm font-medium relative">
+              {profile?.username ? `${profile.username}` : user.email}
+              {unreadTodos > 0 && (
+                <span className="absolute top-0 -right-2 bg-red-500 h-2 w-2 rounded-full"></span>
+              )}
             </span>
           )}
           <button 
@@ -202,7 +218,19 @@ export function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden px-4 py-4 bg-white border-t">
           <div className="flex flex-col space-y-4">
-            <Link href="/todo-list" className="nav-link py-2" onClick={toggleMenu}>待玩清单</Link>
+            <Link href="/todo-list" 
+              className="nav-link py-2 flex items-center justify-between" 
+              onClick={() => {
+                markTodosAsRead();
+                toggleMenu();
+              }}>
+              <span>待玩清单</span>
+              {unreadTodos > 0 && (
+                <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadTodos}
+                </span>
+              )}
+            </Link>
             <Link href="/group-manager" className="nav-link py-2" onClick={toggleMenu}>游戏组</Link>
             <div className="flex items-center justify-between py-2">
               {!user ? (

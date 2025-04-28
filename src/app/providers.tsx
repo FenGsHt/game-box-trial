@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { NotificationProvider } from '@/lib/NotificationContext'
 
 // 创建一个 QueryClient 实例
 const queryClient = new QueryClient({
@@ -20,7 +21,9 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <NotificationProvider>
+        {children}
+      </NotificationProvider>
     </QueryClientProvider>
   )
 } 
