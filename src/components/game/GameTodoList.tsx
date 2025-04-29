@@ -509,8 +509,6 @@ export function GameTodoList() {
   const [newTodoTitle, setNewTodoTitle] = useState('')
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
-  const [groups, setGroups] = useState<GameGroup[]>([])
-  const [userCreatedGroups, setUserCreatedGroups] = useState<GameGroup[]>([])
   const [selectedGroup, setSelectedGroup] = useState<GameGroup | null>(null)
   const [editingTodo, setEditingTodo] = useState<GameTodo | null>(null)
   const [editForm, setEditForm] = useState<{
@@ -537,7 +535,7 @@ export function GameTodoList() {
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('#3B82F6')
   const [tagError, setTagError] = useState('')
-  const [sortOption, setSortOption] = useState<string>('date')
+  const [sortOption, setSortOption] = useState<string>('time_desc')
   const [userRatings, setUserRatings] = useState<Record<string, number>>({})
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [sortedTodos, setSortedTodos] = useState<GameTodo[]>([])
@@ -651,22 +649,7 @@ export function GameTodoList() {
           return
         }
         
-        // 根据排序方式排序结果
-        const sortedData = [...(data || [])]
-        if (sortOption === 'rating') {
-          sortedData.sort((a, b) => {
-            const ratingA = a.avg_rating || 0
-            const ratingB = b.avg_rating || 0
-            return ratingB - ratingA // 从高到低排序
-          })
-        } else {
-          // 默认按创建时间排序
-          sortedData.sort((a, b) => {
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          })
-        }
-        
-        setTodos(sortedData)
+        setTodos(data || [])
 
         // 获取当前用户对这些游戏的评分
         if (data && data.length > 0 && user?.id) {
@@ -1752,10 +1735,16 @@ export function GameTodoList() {
     const sortedList = [...todos];
     
     switch (option) {
-      case "avg_rating_high":
+      case "time_desc": // 按时间从新到旧排序
+        sortedList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      case "time_asc": // 按时间从旧到新排序
+        sortedList.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case "avg_rating_high": // 按评分从高到低排序
         sortedList.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
         break;
-      case "avg_rating_low":
+      case "avg_rating_low": // 按评分从低到高排序
         sortedList.sort((a, b) => (a.avg_rating || 0) - (b.avg_rating || 0));
         break;
       case "my_rating_high":
@@ -1842,10 +1831,19 @@ export function GameTodoList() {
 
       <div className="flex gap-2 items-center">
         <div className="relative">
-          <Button variant="outline" onClick={() => setSortOption(prev => prev === 'date' ? 'rating' : 'date')} className="gap-2">
-            <SortIcon className="h-5 w-5" />
-            <span>{sortOption === 'date' ? '按时间排序' : '按评分排序'}</span>
-          </Button>
+          <select 
+            className="border rounded py-2 px-3 appearance-none bg-white pr-10 cursor-pointer"
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+          >
+            <option value="time_desc">按时间从新到旧</option>
+            <option value="time_asc">按时间从旧到新</option>
+            <option value="avg_rating_high">按评分从高到低</option>
+            <option value="avg_rating_low">按评分从低到高</option>
+          </select>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <SortIcon className="h-4 w-4 text-gray-400" />
+          </span>
         </div>
         <form onSubmit={addTodo} className="flex items-center gap-2">
           <Input
@@ -1941,13 +1939,13 @@ export function GameTodoList() {
                 </div>
               </div>
               
-              {todo.note && editingTodo !== todo.id && (
+              {todo.note && editingTodo?.id !== todo.id && (
                 <div className="ml-8 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
                   <span className="font-medium">游戏备注: </span>{todo.note}
                 </div>
               )}
               
-              {editingTodo === todo.id ? (
+              {editingTodo?.id === todo.id ? (
                 renderEditForm(todo)
               ) : (
                 <>
@@ -2012,20 +2010,7 @@ export function GameTodoList() {
                   aria-label="添加留言"
                   title="添加留言"
                 >
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" 
-                    />
-                  </svg>
+                  <CommentIcon className="h-5 w-5" />
                 </button>
                 <button
                   onClick={() => startEditing(todo)}
