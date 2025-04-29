@@ -1560,92 +1560,85 @@ export function GameTodoList() {
       ) : (
         <ul className="space-y-6">
           {sortedTodos.map((todo) => (
-            <li key={todo.id} className="flex flex-col border-b pb-4 mb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center w-full">
-                    <Checkbox 
-                      id={`todo-${todo.id}`}
-                      checked={todo.is_completed}
-                      onCheckedChange={() => toggleTodo(todo.id, todo.is_completed)}
-                      className="h-5 w-5"
-                    />
-                    <div className="flex flex-col">
-                      {todo.image_url && (
-                        <div className="mb-2 h-16 w-32 flex-shrink-0 rounded overflow-hidden">
-                          <img 
-                            src={todo.image_url} 
-                            alt={todo.title}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              // 图片加载失败时使用占位图
-                              (e.target as HTMLImageElement).src = "https://placehold.co/160x80/eee/999?text=No+Image";
-                            }}
+            <li key={todo.id} className="flex flex-col border rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white pb-4 mb-2 overflow-hidden">
+              <div className="p-4 pb-2">
+                <div className="flex items-start w-full">
+                  <Checkbox 
+                    id={`todo-${todo.id}`}
+                    checked={todo.is_completed}
+                    onCheckedChange={() => toggleTodo(todo.id, todo.is_completed)}
+                    className="h-5 w-5 mt-1.5"
+                  />
+                  <div className="flex ml-3 flex-wrap md:flex-nowrap">
+                    {todo.image_url ? (
+                      <div className="mr-3 h-16 w-32 flex-shrink-0 rounded-md overflow-hidden shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+                        <img 
+                          src={todo.image_url} 
+                          alt={todo.title}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            // 图片加载失败时使用占位图
+                            (e.target as HTMLImageElement).src = "https://placehold.co/320x160/eee/999?text=No+Image";
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="mr-3 h-16 w-32 flex-shrink-0 rounded-md overflow-hidden shadow-md border border-gray-200 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="h-8 w-8 text-gray-400"
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={1.5} 
+                            d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" 
                           />
-                        </div>
-                      )}
-                      <label 
-                        htmlFor={`todo-${todo.id}`}
-                        className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium flex items-center gap-2`}
-                      >
-                        {todo.link ? (
-                          <a 
-                            href={todo.link} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {todo.title}
-                          </a>
-                        ) : (
-                          todo.title
-                        )}
-                        {todo.group_id && selectedGroup && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {selectedGroup.name}
-                          </span>
-                        )}
-                        {todo.price && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                            ¥{todo.price.toFixed(2)}
-                          </span>
-                        )}
-                      </label>
+                        </svg>
+                      </div>
+                    )}
+                    <div className="flex flex-col flex-grow min-w-0">
+                      <div className="flex items-center justify-between">
+                        <label 
+                          htmlFor={`todo-${todo.id}`}
+                          className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium flex items-center gap-2 mb-1 truncate`}
+                        >
+                          {todo.link ? (
+                            <a 
+                              href={todo.link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline truncate"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {todo.title}
+                            </a>
+                          ) : (
+                            todo.title
+                          )}
+                          {todo.group_id && selectedGroup && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                              {selectedGroup.name}
+                            </span>
+                          )}
+                          {todo.price && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                              ¥{todo.price.toFixed(2)}
+                            </span>
+                          )}
+                        </label>
+                      </div>
                       {renderTags(todo)}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => openTagModal(todo.id)}
-                    className="text-gray-400 hover:text-blue-500 transition-colors"
-                    aria-label="管理标签"
-                    title="管理标签"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => startEditing(todo)}
-                    className="text-gray-400 hover:text-blue-500 transition-colors"
-                    aria-label="编辑"
-                  >
-                    <EditIcon className="h-5 w-5" />
-                  </button>
-                  <button 
-                    onClick={() => deleteTodo(todo.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors"
-                    aria-label="删除"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </div>
               </div>
               
               {todo.note && editingTodo !== todo.id && (
-                <div className="ml-7 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
+                <div className="ml-8 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
                   <span className="font-medium">游戏备注: </span>{todo.note}
                 </div>
               )}
@@ -1654,7 +1647,7 @@ export function GameTodoList() {
                 renderEditForm(todo)
               ) : (
                 <>
-                  <div className="ml-7 mt-3">
+                  <div className="ml-8 mt-3">
                     <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors p-3 rounded-lg shadow-sm">
                       <span className="text-sm font-medium text-gray-600 mr-3">我的评分:</span>
                       <div className="flex-grow">
@@ -1692,11 +1685,38 @@ export function GameTodoList() {
                     )}
                   </div>
                   
-                  <div className="ml-7 mt-2">
+                  <div className="ml-8 mt-2">
                     {renderComments(todo.id)}
                   </div>
                 </>
               )}
+              
+              <div className="flex items-center justify-end mt-3 gap-2">
+                <button
+                  onClick={() => openTagModal(todo.id)}
+                  className="text-gray-400 hover:text-blue-500 transition-colors p-1 rounded hover:bg-gray-100"
+                  aria-label="管理标签"
+                  title="管理标签"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => startEditing(todo)}
+                  className="text-gray-400 hover:text-blue-500 transition-colors p-1 rounded hover:bg-gray-100"
+                  aria-label="编辑"
+                >
+                  <EditIcon className="h-5 w-5" />
+                </button>
+                <button 
+                  onClick={() => deleteTodo(todo.id)}
+                  className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-gray-100"
+                  aria-label="删除"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
