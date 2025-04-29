@@ -35,15 +35,9 @@ BEGIN
         FROM game_group_members
         WHERE group_id = todo_group_id;
         
-        -- 获取已评分用户数
-        SELECT COUNT(*) INTO rated_users
-        FROM game_ratings gr
-        JOIN game_group_members ggm ON gr.user_id = ggm.user_id
-        WHERE gr.game_todo_id = game_id
-        AND ggm.group_id = todo_group_id;
-        
-        -- 获取已评分用户的平均分
-        SELECT COALESCE(AVG(rating), 0) INTO avg_rated_score
+        -- 获取已评分用户数和他们的评分总和
+        SELECT COUNT(*), COALESCE(AVG(gr.rating), 0) 
+        INTO rated_users, avg_rated_score
         FROM game_ratings gr
         JOIN game_group_members ggm ON gr.user_id = ggm.user_id
         WHERE gr.game_todo_id = game_id
@@ -87,15 +81,9 @@ BEGIN
         FROM game_group_members
         WHERE group_id = game_rec.group_id;
         
-        -- 获取已评分用户数
-        SELECT COUNT(*) INTO rated_users
-        FROM game_ratings gr
-        JOIN game_group_members ggm ON gr.user_id = ggm.user_id
-        WHERE gr.game_todo_id = game_rec.id
-        AND ggm.group_id = game_rec.group_id;
-        
-        -- 获取已评分用户的平均分
-        SELECT COALESCE(AVG(rating), 0) INTO avg_rated_score
+        -- 获取已评分用户数和他们的评分平均值
+        SELECT COUNT(*), COALESCE(AVG(gr.rating), 0) 
+        INTO rated_users, avg_rated_score
         FROM game_ratings gr
         JOIN game_group_members ggm ON gr.user_id = ggm.user_id
         WHERE gr.game_todo_id = game_rec.id

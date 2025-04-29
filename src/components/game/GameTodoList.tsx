@@ -697,8 +697,8 @@ export function GameTodoList() {
 
     fetchTodos()
 
-    // 设置实时订阅
-    const subscription = supabase
+    // 设置实时订阅 - 游戏列表变更
+    const todoSubscription = supabase
       .channel('game_todos_changes')
       .on('postgres_changes', 
         { 
@@ -732,8 +732,28 @@ export function GameTodoList() {
       )
       .subscribe()
     
+    // 设置实时订阅 - 游戏评分变更
+    const ratingsSubscription = supabase
+      .channel('game_ratings_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'game_ratings'
+        }, 
+        async (payload) => {
+          // 当有评分变更时，获取对应游戏的最新数据
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const gameId = payload.new.game_todo_id;
+            await fetchUpdatedGameData(gameId);
+          }
+        }
+      )
+      .subscribe()
+    
     return () => {
-      subscription.unsubscribe()
+      todoSubscription.unsubscribe()
+      ratingsSubscription.unsubscribe()
     }
   }, [user?.id, selectedGroup, sortOption]);
 
@@ -1094,8 +1114,46 @@ export function GameTodoList() {
       
       // 更新通知状态，刷新未评分游戏的数量
       await updateNotifications();
+      
+      // 从数据库重新获取该游戏的最新数据，包括更新后的平均分
+      await fetchUpdatedGameData(todoId);
     } catch (error) {
       console.error('更新游戏评分异常:', error);
+    }
+  }
+  
+  // 获取单个游戏的最新数据
+  const fetchUpdatedGameData = async (todoId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('game_todos')
+        .select('*')
+        .eq('id', todoId)
+        .single();
+        
+      if (error) {
+        console.error('获取游戏最新数据失败:', error);
+        return;
+      }
+      
+      if (data) {
+        // 更新本地状态中的游戏数据，特别是平均分
+        setTodos(prev => {
+          const updatedTodos = prev.map(todo => 
+            todo.id === todoId ? { ...todo, avg_rating: data.avg_rating } : todo
+          );
+          return updatedTodos;
+        });
+        
+        // 同时更新排序后的游戏列表
+        setSortedTodos(prev => 
+          prev.map(todo => 
+            todo.id === todoId ? { ...todo, avg_rating: data.avg_rating } : todo
+          )
+        );
+      }
+    } catch (error) {
+      console.error('获取游戏最新数据异常:', error);
     }
   }
 
