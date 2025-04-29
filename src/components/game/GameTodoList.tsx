@@ -526,7 +526,7 @@ export function GameTodoList() {
   const [commentText, setCommentText] = useState('')
   const [commentingTodo, setCommentingTodo] = useState<string | null>(null)
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
-  const { markTodosAsRead } = useNotifications()
+  const { markTodosAsRead, updateNotifications } = useNotifications()
   const [tags, setTags] = useState<GameTag[]>([])
   const [loadingTags, setLoadingTags] = useState(false)
   const [tagModalOpen, setTagModalOpen] = useState(false)
@@ -1091,6 +1091,9 @@ export function GameTodoList() {
         ...prev,
         [todoId]: rating
       }));
+      
+      // 更新通知状态，刷新未评分游戏的数量
+      await updateNotifications();
     } catch (error) {
       console.error('更新游戏评分异常:', error);
     }

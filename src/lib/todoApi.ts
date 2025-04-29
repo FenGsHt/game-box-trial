@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 
-// 获取未读的待玩游戏数量
-export async function getUnreadTodosCount() {
+// 获取用户组内未评分的游戏数量
+export async function getUnratedGroupGamesCount() {
   try {
     const { data: user } = await supabase.auth.getUser();
     
@@ -9,97 +9,66 @@ export async function getUnreadTodosCount() {
       return 0;
     }
     
-    // 获取最近7天内添加的、未被当前用户查看的待玩游戏
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    // 查询个人未读游戏
-    const { data: personalData, error: personalError } = await supabase
-      .from('game_todos')
-      .select('id')
-      .eq('user_id', user.user.id)
-      .is('group_id', null)
-      .eq('is_viewed', false)
-      .gte('created_at', sevenDaysAgo.toISOString());
-    
-    if (personalError) {
-      console.error('获取个人未读待玩游戏失败:', personalError);
-      return 0;
-    }
-    
-    // 查询用户加入的组的未读游戏
+    // 查询用户加入的组
     const { data: groupIds, error: groupError } = await supabase
       .from('game_group_members')
       .select('group_id')
       .eq('user_id', user.user.id);
     
-    if (groupError) {
-      console.error('获取用户组失败:', groupError);
-      return personalData?.length || 0;
+    if (groupError || !groupIds || groupIds.length === 0) {
+      console.error('获取用户组失败或用户没有加入任何组:', groupError);
+      return 0;
     }
     
-    let groupUnreadCount = 0;
+    const groupIdArray = groupIds.map(item => item.group_id);
     
-    if (groupIds && groupIds.length > 0) {
-      const groupIdArray = groupIds.map(item => item.group_id);
-      
-      const { data: groupData, error: groupDataError } = await supabase
-        .from('game_todos')
-        .select('id')
-        .in('group_id', groupIdArray)
-        .neq('user_id', user.user.id) // 不包括自己创建的
-        .eq('is_viewed', false)
-        .gte('created_at', sevenDaysAgo.toISOString());
-      
-      if (!groupDataError) {
-        groupUnreadCount = groupData?.length || 0;
-      }
+    // 查询组内所有游戏
+    const { data: groupGames, error: gamesError } = await supabase
+      .from('game_todos')
+      .select('id')
+      .in('group_id', groupIdArray);
+    
+    if (gamesError || !groupGames || groupGames.length === 0) {
+      console.error('获取组内游戏失败或组内没有游戏:', gamesError);
+      return 0;
     }
     
-    return (personalData?.length || 0) + groupUnreadCount;
+    const gameIds = groupGames.map(game => game.id);
+    
+    // 查询用户已经评分的游戏
+    const { data: ratedGames, error: ratedError } = await supabase
+      .from('game_ratings')
+      .select('game_todo_id')
+      .eq('user_id', user.user.id)
+      .in('game_todo_id', gameIds);
+    
+    if (ratedError) {
+      console.error('获取用户已评分游戏失败:', ratedError);
+      return 0;
+    }
+    
+    // 用户已评分的游戏ID集合
+    const ratedGameIds = new Set(ratedGames?.map(game => game.game_todo_id) || []);
+    
+    // 计算未评分的游戏数量
+    const unratedCount = gameIds.filter(id => !ratedGameIds.has(id)).length;
+    
+    return unratedCount;
   } catch (error) {
-    console.error('获取未读待玩游戏数量异常:', error);
+    console.error('获取未评分游戏数量异常:', error);
     return 0;
   }
 }
 
-// 更新待玩游戏为已读
+// 获取未读的待玩游戏数量
+export async function getUnreadTodosCount() {
+  return getUnratedGroupGamesCount();
+}
+
+// 更新待玩游戏为已读 - 现在是空函数，因为我们基于未评分状态来展示通知
 export async function markTodosAsViewed() {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user?.user) {
-      return;
-    }
-    
-    // 更新个人待玩游戏为已读
-    await supabase
-      .from('game_todos')
-      .update({ is_viewed: true })
-      .eq('user_id', user.user.id)
-      .is('group_id', null)
-      .eq('is_viewed', false);
-    
-    // 查询用户加入的组
-    const { data: groupIds } = await supabase
-      .from('game_group_members')
-      .select('group_id')
-      .eq('user_id', user.user.id);
-    
-    if (groupIds && groupIds.length > 0) {
-      const groupIdArray = groupIds.map(item => item.group_id);
-      
-      // 更新组内待玩游戏为已读
-      await supabase
-        .from('game_todos')
-        .update({ is_viewed: true })
-        .in('group_id', groupIdArray)
-        .neq('user_id', user.user.id)
-        .eq('is_viewed', false);
-    }
-  } catch (error) {
-    console.error('标记待玩游戏为已读失败:', error);
-  }
+  // 不再需要标记游戏为已读，因为通知是基于未评分状态
+  return;
 }
 
 // 添加获取Steam游戏封面图片URL的函数
