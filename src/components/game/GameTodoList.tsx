@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { GameGroup, getUserCreatedGroups, getUserJoinedGroups } from '@/lib/gameGroupApi'
 import { useNotifications } from '@/lib/NotificationContext'
 import { getSteamGameImageUrl } from '@/lib/todoApi'
+import { invokeSteamImagesApi } from '@/lib/supabase-functions'
 
 // 待玩游戏项类型
 export interface GameTodo {
@@ -23,7 +24,8 @@ export interface GameTodo {
   note?: string // 游戏留言
   price?: number // 游戏价格
   tags?: string[] // 游戏标签ID列表
-  image_url?: string // 游戏封面图片URL
+  image_url?: string // 主游戏封面图片URL
+  preview_images?: string[] // 游戏预览图片URL数组
 }
 
 // 游戏留言类型
@@ -268,6 +270,221 @@ const EditIcon = (props: { className?: string }) => (
     />
   </svg>
 )
+
+// 添加图片轮播组件
+const GameImageCarousel = ({ 
+  images, 
+  title 
+}: { 
+  images: string[]; 
+  title: string;
+}) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
+  
+  // 自动轮播
+  useEffect(() => {
+    if (!isHovering && images.length > 1 && !showFullImage) {
+      const interval = setInterval(() => {
+        setActiveIndex((current) => (current + 1) % images.length);
+      }, 1500);
+      
+      return () => clearInterval(interval);
+    }
+  }, [images.length, isHovering, showFullImage]);
+  
+  // 点击切换到下一张图片
+  const goToNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveIndex((current) => (current + 1) % images.length);
+  };
+  
+  // 点击切换到上一张图片
+  const goToPrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveIndex((current) => (current - 1 + images.length) % images.length);
+  };
+  
+  // 显示大图
+  const handleImageClick = () => {
+    if (images.length > 0) {
+      setShowFullImage(true);
+    }
+  };
+  
+  // 关闭大图
+  const closeFullImage = () => {
+    setShowFullImage(false);
+  };
+  
+  // 如果没有图片，显示占位图
+  if (!images || images.length === 0) {
+    return (
+      <div className="mr-3 h-16 w-32 flex-shrink-0 rounded-md overflow-hidden shadow-md border border-gray-200 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-8 w-8 text-gray-400"
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={1.5} 
+            d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" 
+          />
+        </svg>
+      </div>
+    );
+  }
+  
+  return (
+    <>
+      <div 
+        className="mr-3 h-16 w-32 flex-shrink-0 rounded-md overflow-hidden shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 relative cursor-pointer"
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+        onClick={handleImageClick}
+      >
+        {/* 主图片 */}
+        {images.map((image, index) => (
+          <img 
+            key={index}
+            src={image} 
+            alt={`${title} - 图片 ${index + 1}`}
+            className={`h-full w-full object-cover absolute top-0 left-0 transition-opacity duration-300 ${
+              index === activeIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            }`}
+            onError={(e) => {
+              // 图片加载失败时使用占位图
+              (e.target as HTMLImageElement).src = "https://placehold.co/320x160/eee/999?text=No+Image";
+            }}
+          />
+        ))}
+        
+        {/* 显示多于1张图片时的指示器和控制器 */}
+        {images.length > 1 && (
+          <>
+            {/* 左右箭头（仅在悬停时显示） */}
+            {isHovering && (
+              <>
+                <button 
+                  className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-0.5 z-20 hover:bg-opacity-50 rounded-r"
+                  onClick={goToPrevImage}
+                  aria-label="上一张"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button 
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-0.5 z-20 hover:bg-opacity-50 rounded-l"
+                  onClick={goToNextImage}
+                  aria-label="下一张"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+            
+            {/* 底部指示点 */}
+            <div className="absolute bottom-0 left-0 right-0 z-20 flex justify-center gap-1 p-1 bg-black bg-opacity-30">
+              {images.map((_, index) => (
+                <button
+                  key={index}
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    index === activeIndex ? 'bg-white' : 'bg-gray-400'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveIndex(index);
+                  }}
+                  aria-label={`切换到图片 ${index + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+        
+        {/* 图片数量指示 */}
+        {images.length > 1 && (
+          <div className="absolute top-0 right-0 bg-black bg-opacity-50 text-white text-xs px-1 rounded-bl z-20">
+            {activeIndex + 1}/{images.length}
+          </div>
+        )}
+      </div>
+      
+      {/* 全屏查看大图 */}
+      {showFullImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4" onClick={closeFullImage}>
+          <div className="relative max-w-4xl max-h-screen">
+            <img 
+              src={images[activeIndex]} 
+              alt={`${title} - 大图`}
+              className="max-h-[90vh] max-w-full object-contain"
+            />
+            
+            {/* 关闭按钮 */}
+            <button 
+              className="absolute top-2 right-2 bg-black bg-opacity-50 text-white p-1 rounded-full"
+              onClick={closeFullImage}
+              aria-label="关闭"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* 左右箭头 */}
+            {images.length > 1 && (
+              <>
+                <button 
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+                  onClick={goToPrevImage}
+                  aria-label="上一张"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button 
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+                  onClick={goToNextImage}
+                  aria-label="下一张"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+            
+            {/* 图片指示器 */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+              {images.map((_, index) => (
+                <button
+                  key={index}
+                  className={`w-2 h-2 rounded-full ${
+                    index === activeIndex ? 'bg-white' : 'bg-gray-500'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveIndex(index);
+                  }}
+                  aria-label={`切换到图片 ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 export function GameTodoList() {
   // const { t } = useTranslation()
@@ -768,12 +985,29 @@ export function GameTodoList() {
     if (!newTodo.trim() || !user?.id) return
     
     try {
+      setLoading(true);
+      // 获取游戏图片信息
+      const data = await invokeSteamImagesApi(newTodo.trim());
+      
+      let imageUrl = null;
+      let previewImages: string[] = [];
+      
+      if (data.error) {
+        console.error('获取游戏图片信息失败:', data.error);
+        // 回退到原来的获取方法
+        imageUrl = await getSteamGameImageUrl(newTodo.trim());
+      } else {
+        imageUrl = data.header_url;
+        previewImages = data.preview_urls || [];
+      }
+      
       const newTodoItem = {
         title: newTodo.trim(),
         is_completed: false,
         user_id: user.id,
         group_id: selectedGroup?.id || null, // 添加到当前选择的组
-        image_url: await getSteamGameImageUrl(newTodo.trim()) // 获取Steam游戏封面图片URL
+        image_url: imageUrl, // 获取Steam游戏封面图片URL
+        preview_images: previewImages // 游戏预览图URL数组
       }
       
       const { error } = await supabase
@@ -788,6 +1022,8 @@ export function GameTodoList() {
       setNewTodo('')
     } catch (error) {
       console.error('添加待玩游戏异常:', error)
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -1571,17 +1807,13 @@ export function GameTodoList() {
                   />
                   <div className="flex ml-3 flex-wrap md:flex-nowrap">
                     {todo.image_url ? (
-                      <div className="mr-3 h-16 w-32 flex-shrink-0 rounded-md overflow-hidden shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300">
-                        <img 
-                          src={todo.image_url} 
-                          alt={todo.title}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            // 图片加载失败时使用占位图
-                            (e.target as HTMLImageElement).src = "https://placehold.co/320x160/eee/999?text=No+Image";
-                          }}
-                        />
-                      </div>
+                      <GameImageCarousel 
+                        images={[
+                          todo.image_url, 
+                          ...(todo.preview_images || [])
+                        ].filter(Boolean)} 
+                        title={todo.title} 
+                      />
                     ) : (
                       <div className="mr-3 h-16 w-32 flex-shrink-0 rounded-md overflow-hidden shadow-md border border-gray-200 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                         <svg 
