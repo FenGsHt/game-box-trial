@@ -9,7 +9,6 @@ import { supabase } from '@/lib/supabase'
 import { GameGroup, getUserCreatedGroups, getUserJoinedGroups } from '@/lib/gameGroupApi'
 import { useNotifications } from '@/lib/NotificationContext'
 import { getSteamGameImageUrl } from '@/lib/todoApi'
-import { User } from '@supabase/supabase-js'
 
 // 待玩游戏项类型
 export interface GameTodo {

@@ -105,32 +105,22 @@ export async function markTodosAsViewed() {
 // 添加获取Steam游戏封面图片URL的函数
 export async function getSteamGameImageUrl(gameName: string) {
   try {
-    // 构建搜索URL
-    const searchUrl = `https://store.steampowered.com/search/?term=${encodeURIComponent(gameName)}`;
+    // 使用服务端API来处理请求，避免跨域问题
+    const response = await fetch(`/api/get-steam-image?game=${encodeURIComponent(gameName)}`);
     
-    // 发送请求获取搜索结果页面
-    const response = await fetch(searchUrl);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`API error! status: ${response.status}`);
     }
     
-    const html = await response.text();
+    const data = await response.json();
     
-    // 使用正则表达式从HTML中提取appId
-    const appIdMatch = html.match(/href="https:\/\/store\.steampowered\.com\/app\/(\d+)/);
-    if (!appIdMatch || !appIdMatch[1]) {
+    if (!data.imageUrl) {
       console.log(`未找到对应的Steam游戏: ${gameName}`);
       return null;
     }
     
-    const appId = appIdMatch[1];
-    console.log(`${gameName} 的AppID是：${appId}`);
-    
-    // 构建图片URL
-    const imageUrl = `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`;
-    console.log(`封面图片URL为：${imageUrl}`);
-    
-    return imageUrl;
+    console.log(`${gameName} 的封面图片URL为：${data.imageUrl}`);
+    return data.imageUrl;
   } catch (error) {
     console.error('获取Steam游戏图片URL失败:', error);
     return null;
