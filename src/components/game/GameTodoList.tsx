@@ -543,6 +543,11 @@ export function GameTodoList() {
   const [userGroups, setUserGroups] = useState<GameGroup[]>([])
   const [joinedGroups, setJoinedGroups] = useState<GameGroup[]>([])
   
+  // 新增标签过滤状态
+  // 状态: 0=未选择, 1=已选择(包含), 2=已排除
+  const [tagFilterState, setTagFilterState] = useState<Record<string, number>>({})
+  const [isSearching, setIsSearching] = useState(false)
+  
   // 用于显示的评论数量限制
   const MAX_VISIBLE_COMMENTS = 3;
 
@@ -1887,15 +1892,68 @@ export function GameTodoList() {
   useEffect(() => {
     // 先过滤，再排序
     let filteredList = todos;
+    
+    // 按搜索词过滤
     if (searchTerm) {
-      filteredList = todos.filter(todo => 
+      filteredList = filteredList.filter(todo => 
         todo.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
+    // 按标签过滤
+    if (Object.keys(tagFilterState).length > 0) {
+      const includedTagIds = Object.keys(tagFilterState).filter(tagId => tagFilterState[tagId] === 1);
+      const excludedTagIds = Object.keys(tagFilterState).filter(tagId => tagFilterState[tagId] === 2);
+      
+      if (includedTagIds.length > 0 || excludedTagIds.length > 0) {
+        filteredList = filteredList.filter(todo => {
+          const todoTags = todo.tags || [];
+          
+          // 必须包含所有已选标签
+          const hasAllIncludedTags = includedTagIds.every(tagId => todoTags.includes(tagId));
+          
+          // 不能包含任何已排除标签
+          const hasNoExcludedTags = excludedTagIds.every(tagId => !todoTags.includes(tagId));
+          
+          return hasAllIncludedTags && hasNoExcludedTags;
+        });
+      }
+    }
+    
     const sorted = sortTodos(filteredList, sortOption);
     setSortedTodos(sorted);
-  }, [todos, searchTerm, sortOption, userRatings]);
+  }, [todos, searchTerm, sortOption, userRatings, tagFilterState]);
+  
+  // 切换标签筛选状态
+  const toggleTagFilter = (tagId: string) => {
+    setTagFilterState(prev => {
+      const currentState = prev[tagId] || 0;
+      const newState = (currentState + 1) % 3; // 循环切换：0 -> 1 -> 2 -> 0
+      
+      const newTagFilterState = { ...prev };
+      if (newState === 0) {
+        // 移除标签筛选
+        delete newTagFilterState[tagId];
+      } else {
+        // 设置标签筛选状态
+        newTagFilterState[tagId] = newState;
+      }
+      
+      return newTagFilterState;
+    });
+  };
+  
+  // 清除所有标签筛选
+  const clearTagFilters = () => {
+    setTagFilterState({});
+  };
+  
+  // 执行搜索
+  const handleSearch = () => {
+    setIsSearching(true);
+    // 搜索已经通过 useEffect 自动触发
+    setTimeout(() => setIsSearching(false), 300);
+  };
 
   if (!user) {
     return (
@@ -1911,32 +1969,103 @@ export function GameTodoList() {
       
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="w-full sm:w-1/2 relative">
-          <Input
-            placeholder="搜索游戏..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full"
-          />
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-            <SearchIcon className="h-5 w-5" />
+          <div className="flex gap-2">
+            <div className="flex-grow relative">
+              <Input
+                placeholder="搜索游戏..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full"
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleSearch();
+                }}
+              />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <SearchIcon className="h-5 w-5" />
+              </div>
+            </div>
+            <Button 
+              onClick={handleSearch}
+              className="px-4"
+              disabled={isSearching}
+            >
+              {isSearching ? (
+                <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <span>搜索</span>
+              )}
+            </Button>
           </div>
         </div>
         
         <div className="flex gap-2">
           {renderGroupSelector()}
         </div>
-        
-        {/* <div className="flex gap-2">
-          <div className="relative">
-            <Button variant="outline" onClick={() => setSortOption(prev => prev === 'date' ? 'rating' : 'date')} className="gap-2">
-              <SortIcon className="h-5 w-5" />
-              <span>{sortOption === 'date' ? '按时间排序' : '按评分排序'}</span>
-            </Button>
-          </div>
-        </div> */}
       </div>
+      
+      {/* 标签筛选区域 */}
+      {!loadingTags && tags.length > 0 && (
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-gray-700">按标签筛选</h3>
+            {Object.keys(tagFilterState).length > 0 && (
+              <Button 
+                variant="ghost" 
+                onClick={clearTagFilters}
+                size="sm"
+                className="text-xs h-7 px-2"
+              >
+                清除筛选
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {tags.map(tag => {
+              // 获取当前标签的筛选状态
+              const filterState = tagFilterState[tag.id] || 0;
+              // 根据状态设置样式
+              let stateStyle = '';
+              let stateIcon = null;
+              
+              if (filterState === 1) {
+                // 已选择状态 - 包含
+                stateStyle = 'ring-2 ring-offset-1 ring-blue-500';
+                stateIcon = (
+                  <span className="ml-1 text-blue-600">✓</span>
+                );
+              } else if (filterState === 2) {
+                // 已排除状态
+                stateStyle = 'ring-2 ring-offset-1 ring-red-500 opacity-60';
+                stateIcon = (
+                  <span className="ml-1 text-red-600">✕</span>
+                );
+              }
+              
+              return (
+                <button
+                  key={tag.id}
+                  onClick={() => toggleTagFilter(tag.id)}
+                  className={`px-2 py-1 rounded-full text-sm font-medium transition-colors ${
+                    filterState === 0 ? 'opacity-70 hover:opacity-100' : ''
+                  } ${stateStyle}`}
+                  style={{ 
+                    backgroundColor: tag.color,
+                    color: getContrastColor(tag.color)
+                  }}
+                  title={filterState === 0 ? '点击包含此标签' : 
+                         filterState === 1 ? '点击排除此标签' : '点击取消筛选'}
+                >
+                  {tag.name}
+                  {stateIcon}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
       {editingTodo && renderEditForm(editingTodo)}
-
+      
       <div className="flex gap-2 items-center">
         <div className="relative">
           <select 
