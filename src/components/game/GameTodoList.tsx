@@ -517,10 +517,12 @@ export function GameTodoList() {
     link: string;
     note: string;
     price: string;
+    image_url: string;
   }>({
     link: '',
     note: '',
     price: '',
+    image_url: '',
   })
   const [comments, setComments] = useState<Record<string, GameComment[]>>({})
   const [commentText, setCommentText] = useState('')
@@ -1183,7 +1185,8 @@ export function GameTodoList() {
         .update({ 
           link: editForm.link || null,
           note: editForm.note || null,
-          price: priceValue 
+          price: priceValue,
+          image_url: editForm.image_url || null
         })
         .eq('id', id)
       
@@ -1205,6 +1208,7 @@ export function GameTodoList() {
       link: todo.link || '',
       note: todo.note || '',
       price: todo.price?.toString() || '',
+      image_url: todo.image_url || '',
     })
   }
 
@@ -1313,6 +1317,35 @@ export function GameTodoList() {
             step="0.01"
             min="0"
           />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            封面图片URL
+          </label>
+          <Input
+            type="text"
+            value={editForm.image_url}
+            onChange={(e) => setEditForm({...editForm, image_url: e.target.value})}
+            placeholder="输入封面图片URL..."
+            className="w-full"
+          />
+          {editForm.image_url && (
+            <div className="mt-2">
+              <p className="text-xs text-gray-500 mb-1">封面预览：</p>
+              <div className="h-20 w-40 bg-gray-100 rounded-md overflow-hidden border border-gray-200">
+                <img 
+                  src={editForm.image_url} 
+                  alt="封面预览" 
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    // 图片加载失败时显示占位图
+                    (e.target as HTMLImageElement).src = "https://placehold.co/320x160/eee/999?text=无效图片";
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="flex justify-end gap-2 mt-4">
