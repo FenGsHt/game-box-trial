@@ -100,4 +100,39 @@ export async function markTodosAsViewed() {
   } catch (error) {
     console.error('标记待玩游戏为已读失败:', error);
   }
+}
+
+// 添加获取Steam游戏封面图片URL的函数
+export async function getSteamGameImageUrl(gameName: string) {
+  try {
+    // 构建搜索URL
+    const searchUrl = `https://store.steampowered.com/search/?term=${encodeURIComponent(gameName)}`;
+    
+    // 发送请求获取搜索结果页面
+    const response = await fetch(searchUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const html = await response.text();
+    
+    // 使用正则表达式从HTML中提取appId
+    const appIdMatch = html.match(/href="https:\/\/store\.steampowered\.com\/app\/(\d+)/);
+    if (!appIdMatch || !appIdMatch[1]) {
+      console.log(`未找到对应的Steam游戏: ${gameName}`);
+      return null;
+    }
+    
+    const appId = appIdMatch[1];
+    console.log(`${gameName} 的AppID是：${appId}`);
+    
+    // 构建图片URL
+    const imageUrl = `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`;
+    console.log(`封面图片URL为：${imageUrl}`);
+    
+    return imageUrl;
+  } catch (error) {
+    console.error('获取Steam游戏图片URL失败:', error);
+    return null;
+  }
 } 

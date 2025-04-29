@@ -8,6 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { supabase } from '@/lib/supabase'
 import { GameGroup, getUserCreatedGroups, getUserJoinedGroups } from '@/lib/gameGroupApi'
 import { useNotifications } from '@/lib/NotificationContext'
+import { getSteamGameImageUrl } from '@/lib/todoApi'
+import { User } from '@supabase/supabase-js'
 
 // 待玩游戏项类型
 export interface GameTodo {
@@ -22,6 +24,7 @@ export interface GameTodo {
   note?: string // 游戏留言
   price?: number // 游戏价格
   tags?: string[] // 游戏标签ID列表
+  image_url?: string // 游戏封面图片URL
 }
 
 // 游戏留言类型
@@ -770,7 +773,8 @@ export function GameTodoList() {
         title: newTodo.trim(),
         is_completed: false,
         user_id: user.id,
-        group_id: selectedGroup?.id || null // 添加到当前选择的组
+        group_id: selectedGroup?.id || null, // 添加到当前选择的组
+        image_url: await getSteamGameImageUrl(newTodo.trim()) // 获取Steam游戏封面图片URL
       }
       
       const { error } = await supabase
@@ -1560,42 +1564,57 @@ export function GameTodoList() {
             <li key={todo.id} className="flex flex-col border-b pb-4 mb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Checkbox 
-                    id={`todo-${todo.id}`}
-                    checked={todo.is_completed}
-                    onCheckedChange={() => toggleTodo(todo.id, todo.is_completed)}
-                    className="h-5 w-5"
-                  />
-                  <div className="flex flex-col">
-                    <label 
-                      htmlFor={`todo-${todo.id}`}
-                      className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium flex items-center gap-2`}
-                    >
-                      {todo.link ? (
-                        <a 
-                          href={todo.link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {todo.title}
-                        </a>
-                      ) : (
-                        todo.title
+                  <div className="flex items-center w-full">
+                    <Checkbox 
+                      id={`todo-${todo.id}`}
+                      checked={todo.is_completed}
+                      onCheckedChange={() => toggleTodo(todo.id, todo.is_completed)}
+                      className="h-5 w-5"
+                    />
+                    <div className="flex flex-col">
+                      {todo.image_url && (
+                        <div className="mb-2 h-16 w-32 flex-shrink-0 rounded overflow-hidden">
+                          <img 
+                            src={todo.image_url} 
+                            alt={todo.title}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              // 图片加载失败时使用占位图
+                              (e.target as HTMLImageElement).src = "https://placehold.co/160x80/eee/999?text=No+Image";
+                            }}
+                          />
+                        </div>
                       )}
-                      {todo.group_id && selectedGroup && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                          {selectedGroup.name}
-                        </span>
-                      )}
-                      {todo.price && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                          ¥{todo.price.toFixed(2)}
-                        </span>
-                      )}
-                    </label>
-                    {renderTags(todo)}
+                      <label 
+                        htmlFor={`todo-${todo.id}`}
+                        className={`${todo.is_completed ? 'line-through text-gray-400' : 'text-gray-700'} text-lg font-medium flex items-center gap-2`}
+                      >
+                        {todo.link ? (
+                          <a 
+                            href={todo.link} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {todo.title}
+                          </a>
+                        ) : (
+                          todo.title
+                        )}
+                        {todo.group_id && selectedGroup && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            {selectedGroup.name}
+                          </span>
+                        )}
+                        {todo.price && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            ¥{todo.price.toFixed(2)}
+                          </span>
+                        )}
+                      </label>
+                      {renderTags(todo)}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
