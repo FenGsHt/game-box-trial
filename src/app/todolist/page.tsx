@@ -8,7 +8,7 @@ export default function TodoListPage() {
 //   const { t } = useTranslation()
   
   return (
-    <div className="container mx-auto px-4 py-8 mt-16">
+    <div className="container mx-auto px-4 py-4 mt-4">
       <h1 className="text-2xl md:text-3xl font-bold mb-8">我的待玩游戏清单</h1>
       
       <div className="max-w-3xl mx-auto">

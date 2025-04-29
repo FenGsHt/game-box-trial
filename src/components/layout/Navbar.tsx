@@ -294,13 +294,13 @@ export function Navbar() {
         {/* 桌面导航 */}
         <div className="hidden md:flex items-center space-x-8">
           <div className="flex space-x-4">
-            <Link href="/todo-list" 
+            <Link href="/todolist" 
               className="nav-link"
               onClick={() => markTodosAsRead()}>待玩清单</Link>
             <Link href="/group-manager" className="nav-link">游戏组</Link>
           </div>
           <div className="flex items-center space-x-3 ml-6">
-            <Link href="/todo-list" 
+            <Link href="/todolist" 
               className="relative group flex-shrink-0"
               onClick={() => markTodosAsRead()}>
               <TodoListIcon className="h-6 w-6 text-gray-500 group-hover:text-blue-600 transition-colors" />
@@ -337,7 +337,7 @@ export function Navbar() {
         <div className="md:hidden flex items-center">
           {user && (
             <div className="flex items-center mr-3">
-              <Link href="/todo-list" 
+              <Link href="/todolist" 
                 className="relative mr-3"
                 onClick={() => markTodosAsRead()}>
                 <TodoListIcon className="h-5 w-5 text-gray-600" />
@@ -377,7 +377,7 @@ export function Navbar() {
               <HomeIcon className="h-5 w-5 text-blue-600" />
               <span>首页</span>
             </Link>
-            <Link href="/todo-list" 
+            <Link href="/todolist" 
               className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 flex items-center space-x-2"
               onClick={() => {
                 setIsMenuOpen(false);
