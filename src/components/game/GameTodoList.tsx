@@ -271,6 +271,24 @@ const EditIcon = (props: { className?: string }) => (
   </svg>
 )
 
+// 添加评论图标
+const CommentIcon = (props: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={props.className} 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" 
+    />
+  </svg>
+)
+
 // 添加图片轮播组件
 const GameImageCarousel = ({ 
   images, 
@@ -487,16 +505,14 @@ const GameImageCarousel = ({
 };
 
 export function GameTodoList() {
-  // const { t } = useTranslation()
   const [todos, setTodos] = useState<GameTodo[]>([])
-  const [newTodo, setNewTodo] = useState('')
+  const [newTodoTitle, setNewTodoTitle] = useState('')
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<{ id?: string, email?: string } | null>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
+  const [groups, setGroups] = useState<GameGroup[]>([])
+  const [userCreatedGroups, setUserCreatedGroups] = useState<GameGroup[]>([])
   const [selectedGroup, setSelectedGroup] = useState<GameGroup | null>(null)
-  const [userGroups, setUserGroups] = useState<GameGroup[]>([])
-  const [joinedGroups, setJoinedGroups] = useState<GameGroup[]>([])
-  const [loadingGroups, setLoadingGroups] = useState(false)
-  const [editingTodo, setEditingTodo] = useState<string | null>(null)
+  const [editingTodo, setEditingTodo] = useState<GameTodo | null>(null)
   const [editForm, setEditForm] = useState<{
     link: string;
     note: string;
@@ -507,23 +523,28 @@ export function GameTodoList() {
     price: '',
   })
   const [comments, setComments] = useState<Record<string, GameComment[]>>({})
-  const [newComment, setNewComment] = useState('')
+  const [commentText, setCommentText] = useState('')
   const [commentingTodo, setCommentingTodo] = useState<string | null>(null)
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
+  const { markTodosAsRead } = useNotifications()
   const [tags, setTags] = useState<GameTag[]>([])
   const [loadingTags, setLoadingTags] = useState(false)
   const [tagModalOpen, setTagModalOpen] = useState(false)
   const [editingTodoTags, setEditingTodoTags] = useState<string | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [newTagName, setNewTagName] = useState('')
-  const [newTagColor, setNewTagColor] = useState('#3B82F6') // 默认蓝色
+  const [newTagColor, setNewTagColor] = useState('#3B82F6')
   const [tagError, setTagError] = useState('')
-  const [userRatings, setUserRatings] = useState<Record<string, number>>({}) // 用户对每个游戏的评分
-  const [searchTerm, setSearchTerm] = useState<string>("")
-  const [sortOption, setSortOption] = useState<string>("default")
+  const [sortOption, setSortOption] = useState<string>('date')
+  const [userRatings, setUserRatings] = useState<Record<string, number>>({})
+  const [searchTerm, setSearchTerm] = useState<string>('')
   const [sortedTodos, setSortedTodos] = useState<GameTodo[]>([])
-  // 获取通知上下文
-  const { markTodosAsRead } = useNotifications();
+  const [loadingGroups, setLoadingGroups] = useState(false)
+  const [userGroups, setUserGroups] = useState<GameGroup[]>([])
+  const [joinedGroups, setJoinedGroups] = useState<GameGroup[]>([])
+  
+  // 用于显示的评论数量限制
+  const MAX_VISIBLE_COMMENTS = 3;
 
   // 获取用户信息
   useEffect(() => {
@@ -982,12 +1003,12 @@ export function GameTodoList() {
   const addTodo = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!newTodo.trim() || !user?.id) return
+    if (!newTodoTitle.trim() || !user?.id) return
     
     try {
       setLoading(true);
       // 获取游戏图片信息
-      const data = await invokeSteamImagesApi(newTodo.trim());
+      const data = await invokeSteamImagesApi(newTodoTitle.trim());
       
       let imageUrl = null;
       let previewImages: string[] = [];
@@ -995,14 +1016,14 @@ export function GameTodoList() {
       if (data.error) {
         console.error('获取游戏图片信息失败:', data.error);
         // 回退到原来的获取方法
-        imageUrl = await getSteamGameImageUrl(newTodo.trim());
+        imageUrl = await getSteamGameImageUrl(newTodoTitle.trim());
       } else {
         imageUrl = data.header_url;
         previewImages = data.preview_urls || [];
       }
       
       const newTodoItem = {
-        title: newTodo.trim(),
+        title: newTodoTitle.trim(),
         is_completed: false,
         user_id: user.id,
         group_id: selectedGroup?.id || null, // 添加到当前选择的组
@@ -1019,7 +1040,7 @@ export function GameTodoList() {
         return
       }
       
-      setNewTodo('')
+      setNewTodoTitle('')
     } catch (error) {
       console.error('添加待玩游戏异常:', error)
     } finally {
@@ -1118,7 +1139,7 @@ export function GameTodoList() {
 
   // 开始编辑待玩游戏
   const startEditing = (todo: GameTodo) => {
-    setEditingTodo(todo.id)
+    setEditingTodo(todo)
     setEditForm({
       link: todo.link || '',
       note: todo.note || '',
@@ -1247,7 +1268,7 @@ export function GameTodoList() {
 
   // 添加留言
   const addComment = async (todoId: string) => {
-    if (!newComment.trim() || !user?.id || !user?.email) return;
+    if (!commentText.trim() || !user?.id || !user?.email) return;
     
     try {
       const email = user.email as string; // 类型断言，告诉TypeScript此时email一定存在
@@ -1268,7 +1289,7 @@ export function GameTodoList() {
         .insert([{
           game_todo_id: todoId,
           user_id: user.id,
-          content: newComment.trim()
+          content: commentText.trim()
         }]);
       
       if (error) {
@@ -1277,7 +1298,7 @@ export function GameTodoList() {
       }
       
       // 清空输入并关闭留言框
-      setNewComment('');
+      setCommentText('');
       setCommentingTodo(null);
     } catch (error) {
       console.error('添加留言异常:', error);
@@ -1287,13 +1308,13 @@ export function GameTodoList() {
   // 开始留言
   const startCommenting = (todoId: string) => {
     setCommentingTodo(todoId);
-    setNewComment('');
+    setCommentText('');
   };
 
   // 取消留言
   const cancelCommenting = () => {
     setCommentingTodo(null);
-    setNewComment('');
+    setCommentText('');
   };
 
   // 切换留言展开/折叠状态
@@ -1309,8 +1330,8 @@ export function GameTodoList() {
     return (
       <div className="mt-2 p-3 bg-gray-50 rounded-lg">
         <textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
           placeholder="写下你的留言..."
           className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           rows={2}
@@ -1319,7 +1340,7 @@ export function GameTodoList() {
           <Button variant="outline" size="sm" onClick={cancelCommenting}>
             取消
           </Button>
-          <Button size="sm" onClick={() => addComment(todoId)} disabled={!newComment.trim()}>
+          <Button size="sm" onClick={() => addComment(todoId)} disabled={!commentText.trim()}>
             添加留言
           </Button>
         </div>
@@ -1327,58 +1348,32 @@ export function GameTodoList() {
     );
   };
 
-  // 渲染留言列表
+  // 渲染评论列表
   const renderComments = (todoId: string) => {
     const todoComments = comments[todoId] || [];
     const isExpanded = expandedComments[todoId] || false;
-    const MAX_VISIBLE_COMMENTS = 3;
     const hasMoreComments = todoComments.length > MAX_VISIBLE_COMMENTS;
     
-    // 根据展开状态决定显示的留言
-    const visibleComments = isExpanded 
-      ? todoComments 
-      : todoComments.slice(0, MAX_VISIBLE_COMMENTS);
-    
-    if (todoComments.length === 0 && commentingTodo !== todoId) {
-      return (
-        <button
-          onClick={() => startCommenting(todoId)}
-          className="text-sm text-blue-600 hover:text-blue-800 mt-2"
-        >
-          添加第一条留言
-        </button>
-      );
-    }
-    
     return (
-      <div className="mt-2">
+      <div className="mt-3">
         {todoComments.length > 0 && (
-          <div className="space-y-2 mb-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium text-gray-700">留言</h4>
-              {hasMoreComments && (
-                <button 
-                  onClick={() => toggleCommentExpand(todoId)}
-                  className="text-xs text-blue-600 hover:text-blue-800"
-                >
-                  {isExpanded 
-                    ? '收起留言' 
-                    : `展开全部(${todoComments.length})`}
-                </button>
-              )}
-            </div>
-            
-            {visibleComments.map(comment => {
-              // 优先使用profiles表中的name字段，其次是users表中的username，再次是email
-              const displayName = comment.user_profile_name || comment.user_username || comment.user_email || (comment.user_id === user?.id ? '我' : '用户');
-              return (
-                <div key={comment.id} className="text-sm bg-gray-50 p-2 rounded-md flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="font-medium text-blue-700">{displayName}:</span>
-                  <span className="text-gray-700 flex-1 break-words">{comment.content}</span>
-                  <span className="text-xs text-gray-500 ml-auto">{new Date(comment.created_at).toLocaleString()}</span>
-                </div>
-              );
-            })}
+          <div className="space-y-2 mb-3 bg-gray-50 p-3 rounded-md">
+            {todoComments
+              .slice(0, isExpanded ? undefined : MAX_VISIBLE_COMMENTS)
+              .map((comment) => {
+                const displayName = comment.user_profile_name || 
+                                  comment.user_username || 
+                                  (comment.user_email ? comment.user_email.split('@')[0] : null) || 
+                                  '匿名用户';
+                
+                return (
+                  <div key={comment.id} className="flex items-start text-sm">
+                    <span className="font-medium min-w-[80px] text-gray-600">{displayName}:</span>
+                    <span className="text-gray-700 flex-1 break-words">{comment.content}</span>
+                    <span className="text-xs text-gray-500 ml-auto">{new Date(comment.created_at).toLocaleString()}</span>
+                  </div>
+                );
+              })}
             
             {hasMoreComments && !isExpanded && (
               <div className="text-center">
@@ -1386,7 +1381,7 @@ export function GameTodoList() {
                   onClick={() => toggleCommentExpand(todoId)}
                   className="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center"
                 >
-                  <span>查看更多留言(${todoComments.length - MAX_VISIBLE_COMMENTS})</span>
+                  <span>查看更多留言({todoComments.length - MAX_VISIBLE_COMMENTS})</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -1396,16 +1391,7 @@ export function GameTodoList() {
           </div>
         )}
         
-        {commentingTodo === todoId ? (
-          renderCommentForm(todoId)
-        ) : (
-          <button
-            onClick={() => startCommenting(todoId)}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            添加留言
-          </button>
-        )}
+        {commentingTodo === todoId && renderCommentForm(todoId)}
       </div>
     );
   };
@@ -1637,7 +1623,7 @@ export function GameTodoList() {
     return brightness > 125 ? '#000000' : '#FFFFFF';
   };
 
-  // 渲染游戏标签
+  // 渲染标签
   const renderTags = (todo: GameTodo) => {
     if (!todo.tags || todo.tags.length === 0) return null;
     
@@ -1706,7 +1692,7 @@ export function GameTodoList() {
     return sortedList;
   };
 
-  // 过滤并排序游戏列表
+  // 过滤和排序待玩游戏
   useEffect(() => {
     // 先过滤，再排序
     let filteredList = todos;
@@ -1722,80 +1708,66 @@ export function GameTodoList() {
 
   if (!user) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500 mb-4">请登录后查看您的待玩游戏清单</p>
-        <Button asChild>
-          <a href="/signin">登录</a>
-        </Button>
+      <div className="flex flex-col items-center justify-center p-8">
+        <h2 className="text-xl font-bold mb-4">请先登录</h2>
+        <p className="text-gray-600 mb-8">登录后即可管理您的待玩游戏列表</p>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-bold mb-4">待玩游戏清单</h2>
+    <div className="p-6 bg-white rounded-lg shadow-md space-y-6">
+      <h1 className="text-2xl font-bold text-gray-800">待玩游戏清单</h1>
       
-      <form onSubmit={addTodo} className="flex mb-6 gap-2">
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <div className="w-full sm:w-1/2 relative">
+          <Input
+            placeholder="搜索游戏..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 w-full"
+          />
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <SearchIcon className="h-5 w-5" />
+          </div>
+        </div>
+        
+        <div className="flex gap-2">
+          {renderGroupSelector()}
+        </div>
+        
+        <div className="flex gap-2">
+          <div className="relative">
+            <Button variant="outline" onClick={() => setSortOption(prev => prev === 'date' ? 'rating' : 'date')} className="gap-2">
+              <SortIcon className="h-5 w-5" />
+              <span>{sortOption === 'date' ? '按时间排序' : '按评分排序'}</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      {editingTodo && renderEditForm(editingTodo)}
+      
+      <form onSubmit={addTodo} className="flex items-center gap-2">
         <Input
           type="text"
-          value={newTodo}
-          onChange={(e) => setNewTodo(e.target.value)}
+          value={newTodoTitle}
+          onChange={(e) => setNewTodoTitle(e.target.value)}
           placeholder="添加待玩的游戏..."
           className="flex-1"
         />
-        <Button type="submit" disabled={!newTodo.trim()}>
+        <Button type="submit" disabled={!newTodoTitle.trim()}>
           <PlusIcon className="h-5 w-5" />
         </Button>
       </form>
       
-      {renderGroupSelector()}
-      
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="flex gap-2">
-          <div className="relative flex-grow">
-            <Input
-              placeholder="搜索游戏..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full"
-            />
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <SearchIcon className="h-5 w-5" />
-            </div>
-          </div>
-        
-          <div className="relative min-w-[180px]">
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
-              className="h-10 w-full rounded-md border border-gray-300 bg-white pl-10 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-            >
-              <option value="default">最新添加</option>
-              <option value="avg_rating_high">平均评分 (高→低)</option>
-              <option value="avg_rating_low">平均评分 (低→高)</option>
-              <option value="my_rating_high">我的评分 (高→低)</option>
-              <option value="my_rating_low">我的评分 (低→高)</option>
-              <option value="name_asc">名称 (A→Z)</option>
-              <option value="name_desc">名称 (Z→A)</option>
-            </select>
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <SortIcon className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
-      </div>
-      
       {loading ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        </div>
-      ) : todos.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          您的待玩游戏清单为空，添加一些游戏吧！
+          <div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"></div>
         </div>
       ) : (
         <ul className="space-y-6">
-          {sortedTodos.map((todo) => (
+          {sortedTodos && sortedTodos.length > 0 ? sortedTodos.map((todo) => (
             <li key={todo.id} className="flex flex-col border rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white pb-4 mb-2 overflow-hidden">
               <div className="p-4 pb-2">
                 <div className="flex items-start w-full">
@@ -1935,6 +1907,27 @@ export function GameTodoList() {
                   </svg>
                 </button>
                 <button
+                  onClick={() => startCommenting(todo.id)}
+                  className="text-gray-400 hover:text-green-500 transition-colors p-1 rounded hover:bg-gray-100"
+                  aria-label="添加留言"
+                  title="添加留言"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className="h-5 w-5" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" 
+                    />
+                  </svg>
+                </button>
+                <button
                   onClick={() => startEditing(todo)}
                   className="text-gray-400 hover:text-blue-500 transition-colors p-1 rounded hover:bg-gray-100"
                   aria-label="编辑"
@@ -1950,11 +1943,17 @@ export function GameTodoList() {
                 </button>
               </div>
             </li>
-          ))}
+          )) : (
+            <div className="text-center py-8 text-gray-500">
+              您的待玩游戏清单为空，添加一些游戏吧！
+            </div>
+          )}
         </ul>
       )}
       
       {renderTagModal()}
+      {/* 页面空白 */}
+      <div style={{ height: 32 }} />
     </div>
   )
 } 
