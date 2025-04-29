@@ -220,8 +220,8 @@ const RatingStars = ({
       return <StarHalfIcon className={`${starSizeClass} text-amber-500`} />;
     }
     
-    // 空星
-    return <StarEmptyIcon className={`${starSizeClass} ${readOnly ? 'text-gray-300' : 'text-gray-300 hover:text-amber-200'}`} />;
+    // 空星 - 修改为在只读模式下使用不同的类
+    return <StarEmptyIcon className={`${starSizeClass} ${readOnly ? 'text-gray-300' : 'text-gray-300 cursor-pointer hover:text-amber-200'}`} />;
   };
   
   return (
@@ -237,7 +237,7 @@ const RatingStars = ({
             {renderStar(star)}
           </div>
           
-          {/* 半星选择区域 - 只有在非只读模式下显示 */}
+          {/* 半星选择区域 - 确保只在非只读模式下显示 */}
           {!readOnly && onChange && (
             <div 
               className="absolute top-0 left-0 w-1/2 h-full z-10 hover:bg-blue-100/10"
@@ -1017,6 +1017,7 @@ export function GameTodoList() {
       
       let imageUrl = null;
       let previewImages: string[] = [];
+      let gameLink = null; // 添加游戏链接变量
       
       if (data.error) {
         console.error('获取游戏图片信息失败:', data.error);
@@ -1025,6 +1026,12 @@ export function GameTodoList() {
       } else {
         imageUrl = data.header_url;
         previewImages = data.preview_urls || [];
+        
+        // 如果获取到了 appId，则设置游戏链接
+        if (data.appId) {
+          gameLink = `https://store.steampowered.com/app/${data.appId}`;
+          console.log(`设置游戏链接: ${gameLink}`);
+        }
       }
       
       const newTodoItem = {
@@ -1033,7 +1040,8 @@ export function GameTodoList() {
         user_id: user.id,
         group_id: selectedGroup?.id || null, // 添加到当前选择的组
         image_url: imageUrl, // 获取Steam游戏封面图片URL
-        preview_images: previewImages // 游戏预览图URL数组
+        preview_images: previewImages, // 游戏预览图URL数组
+        link: gameLink // 添加游戏链接
       }
       
       const { error } = await supabase

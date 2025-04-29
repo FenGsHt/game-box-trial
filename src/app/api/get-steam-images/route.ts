@@ -128,7 +128,7 @@ async function getImagesFromHoverApi(appId: string): Promise<string[]> {
     }
     
     const html = await response.text();
-    console.log(html);
+    // console.log(html);
     
     // 使用多种模式匹配以提高成功率
     const pattern = /https:\/\/[\w.-]+\/store_item_assets\/steam\/apps\/\d+\/ss_[^"'\s]+\.(?:jpg|png|jpeg)[^"'\s]*/g;  
