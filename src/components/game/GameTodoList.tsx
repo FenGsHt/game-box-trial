@@ -1064,16 +1064,116 @@ export function GameTodoList() {
   // 切换完成状态
   const toggleTodo = async (id: string, isCompleted: boolean) => {
     try {
+      // 获取当前游戏的完整数据
+      const { data: todoData, error: todoError } = await supabase
+        .from('game_todos')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (todoError) {
+        console.error('获取游戏数据失败:', todoError);
+        return;
+      }
+      
+      const todo = todoData as GameTodo;
+      const newIsCompleted = !isCompleted;
+      
+      if (newIsCompleted) {
+        // 游戏状态变为已完成，需要添加"已完成"标签
+        // 先获取所有"已完成"标签
+        const { data: tagsData } = await supabase
+          .from('game_tags')
+          .select('*')
+          .eq('name', '已完成')
+          .order('created_at', { ascending: false });
+        
+        // 使用第一个找到的"已完成"标签，如果有多个的话
+        let completedTagId = tagsData && tagsData.length > 0 ? tagsData[0].id : null;
+        
+        // 如果不存在"已完成"标签，创建一个
+        if (!completedTagId && user?.id) {
+          const { data: newTag, error: createError } = await supabase
+            .from('game_tags')
+            .insert([{
+              name: '已完成',
+              color: '#6B7280', // 灰色
+              creator_id: user.id
+            }])
+            .select()
+            .single();
+            
+          if (createError) {
+            console.error('创建已完成标签失败:', createError);
+          } else if (newTag) {
+            completedTagId = newTag.id;
+            // 更新标签列表
+            setTags(prevTags => [...prevTags, newTag]);
+          }
+        }
+        
+        if (completedTagId) {
+          // 更新游戏信息，添加标签
+          const currentTags = todo.tags || [];
+          // 确保不重复添加已完成标签
+          if (!currentTags.includes(completedTagId)) {
+            const { error } = await supabase
+              .from('game_todos')
+              .update({ 
+                is_completed: true,
+                tags: [...currentTags, completedTagId]
+              })
+              .eq('id', id);
+            
+            if (error) {
+              console.error('更新待玩游戏状态失败:', error);
+            }
+            return; // 已经更新，返回
+          }
+        }
+      } else {
+        // 游戏状态变为未完成，需要移除所有"已完成"标签
+        // 先获取所有"已完成"标签
+        const { data: tagsData } = await supabase
+          .from('game_tags')
+          .select('id')
+          .eq('name', '已完成');
+          
+        if (tagsData && tagsData.length > 0) {
+          const completedTagIds = tagsData.map(tag => tag.id);
+          const currentTags = todo.tags || [];
+          // 移除所有"已完成"标签
+          const newTags = currentTags.filter(tagId => !completedTagIds.includes(tagId));
+          
+          // 只有当标签有变化时才更新
+          if (newTags.length !== currentTags.length) {
+            const { error } = await supabase
+              .from('game_todos')
+              .update({ 
+                is_completed: false,
+                tags: newTags
+              })
+              .eq('id', id);
+            
+            if (error) {
+              console.error('更新待玩游戏状态失败:', error);
+            }
+            return; // 已经更新，返回
+          }
+        }
+      }
+      
+      // 如果没有标签变更，仅更新完成状态
       const { error } = await supabase
         .from('game_todos')
-        .update({ is_completed: !isCompleted })
-        .eq('id', id)
+        .update({ is_completed: newIsCompleted })
+        .eq('id', id);
       
       if (error) {
-        console.error('更新待玩游戏状态失败:', error)
+        console.error('更新待玩游戏状态失败:', error);
       }
     } catch (error) {
-      console.error('更新待玩游戏状态异常:', error)
+      console.error('更新待玩游戏状态异常:', error);
     }
   }
 
