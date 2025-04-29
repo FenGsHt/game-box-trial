@@ -1958,9 +1958,11 @@ export function GameTodoList() {
               ) : (
                 <>
                   <div className="ml-8 mt-3">
-                    <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors p-3 rounded-lg shadow-sm">
-                      <span className="text-sm font-medium text-gray-600 mr-3">我的评分:</span>
-                      <div className="flex-grow">
+                    <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors px-4 py-2.5 rounded-lg shadow-sm">
+                      <div className="flex items-center mr-2">
+                        <span className="text-s font-medium text-gray-600">我的评分:</span>
+                      </div>
+                      <div className="flex-shrink-1">
                         <RatingStars 
                           rating={userRatings[todo.id] || 0}
                           onChange={(newRating) => updateRating(todo.id, newRating)}
@@ -1968,31 +1970,43 @@ export function GameTodoList() {
                         />
                       </div>
                       {userRatings[todo.id] ? (
-                        <span className="ml-2 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                        <span className="ml-1 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
                           {userRatings[todo.id].toFixed(1)}
                         </span>
                       ) : (
-                        <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+                        <span className="ml-1 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
                           未评分
                         </span>
                       )}
+                      
+                      {(todo.group_id && todo.avg_rating && todo.avg_rating > 0) && (
+                        <>
+                          <div className="mx-3 h-4 w-px bg-gray-300"></div>
+                          <div className="flex items-center">
+                            <span className="text-s font-medium text-gray-600 mr-1">组内均分:</span>
+                            {(() => {
+                              let colorClass = "text-gray-600 bg-gray-100";
+                              if (todo.avg_rating >= 4.5) {
+                                colorClass = "text-green-700 bg-green-100";
+                              } else if (todo.avg_rating >= 3.5) {
+                                colorClass = "text-blue-600 bg-blue-50";
+                              } else if (todo.avg_rating >= 2.5) {
+                                colorClass = "text-yellow-700 bg-yellow-100";
+                              } else if (todo.avg_rating >= 1.5) {
+                                colorClass = "text-orange-700 bg-orange-100";
+                              } else {
+                                colorClass = "text-red-700 bg-red-100";
+                              }
+                              return (
+                                <span className={`text-lg font-bold px-2 py-0.5 rounded-full ${colorClass}`}>
+                                  {todo.avg_rating.toFixed(1)}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                        </>
+                      )}
                     </div>
-                    
-                    {(todo.group_id && todo.avg_rating && todo.avg_rating > 0) && (
-                      <div className="flex items-center mt-2 bg-gray-50 p-3 rounded-lg shadow-sm">
-                        <span className="text-sm font-medium text-gray-600 mr-3">组内平均分:</span>
-                        <div className="flex-grow">
-                          <RatingStars 
-                            rating={todo.avg_rating}
-                            readOnly={true}
-                            size="md"
-                          />
-                        </div>
-                        <span className="ml-2 text-sm font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                          {todo.avg_rating.toFixed(1)}
-                        </span>
-                      </div>
-                    )}
                   </div>
                   
                   <div className="ml-8 mt-2">
@@ -2001,7 +2015,7 @@ export function GameTodoList() {
                 </>
               )}
               
-              <div className="flex items-center justify-end mt-3 gap-2">
+              <div className="flex items-center justify-end mt-1 gap-2">
                 <button
                   onClick={() => openTagModal(todo.id)}
                   className="text-gray-400 hover:text-blue-500 transition-colors p-1 rounded hover:bg-gray-100"
