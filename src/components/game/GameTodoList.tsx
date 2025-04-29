@@ -1165,7 +1165,7 @@ export function GameTodoList() {
     }
 
     return (
-      <div className="mb-6">
+      <div className="">
         <h3 className="text-sm font-medium text-gray-500 mb-2">选择游戏组</h3>
         <div className="flex flex-wrap gap-2">
           <button
@@ -1717,7 +1717,6 @@ export function GameTodoList() {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">待玩游戏清单</h1>
       
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="w-full sm:w-1/2 relative">
@@ -1736,30 +1735,37 @@ export function GameTodoList() {
           {renderGroupSelector()}
         </div>
         
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <div className="relative">
             <Button variant="outline" onClick={() => setSortOption(prev => prev === 'date' ? 'rating' : 'date')} className="gap-2">
               <SortIcon className="h-5 w-5" />
               <span>{sortOption === 'date' ? '按时间排序' : '按评分排序'}</span>
             </Button>
           </div>
-        </div>
+        </div> */}
       </div>
-      
       {editingTodo && renderEditForm(editingTodo)}
-      
-      <form onSubmit={addTodo} className="flex items-center gap-2">
-        <Input
-          type="text"
-          value={newTodoTitle}
-          onChange={(e) => setNewTodoTitle(e.target.value)}
-          placeholder="添加待玩的游戏..."
-          className="flex-1"
-        />
-        <Button type="submit" disabled={!newTodoTitle.trim()}>
-          <PlusIcon className="h-5 w-5" />
-        </Button>
-      </form>
+
+      <div className="flex gap-2 items-center">
+        <div className="relative">
+          <Button variant="outline" onClick={() => setSortOption(prev => prev === 'date' ? 'rating' : 'date')} className="gap-2">
+            <SortIcon className="h-5 w-5" />
+            <span>{sortOption === 'date' ? '按时间排序' : '按评分排序'}</span>
+          </Button>
+        </div>
+        <form onSubmit={addTodo} className="flex items-center gap-2">
+          <Input
+            type="text"
+            value={newTodoTitle}
+            onChange={(e) => setNewTodoTitle(e.target.value)}
+            placeholder="添加待玩的游戏..."
+            className="flex-1"
+          />
+          <Button type="submit" disabled={!newTodoTitle.trim()}>
+            <PlusIcon className="h-5 w-5" />
+          </Button>
+        </form>
+      </div>
       
       {loading ? (
         <div className="flex justify-center py-8">
@@ -1952,8 +1958,8 @@ export function GameTodoList() {
       )}
       
       {renderTagModal()}
-      {/* 页面空白 */}
-      <div style={{ height: 32 }} />
+      {/* //添加空白 */}
+      
     </div>
   )
 } 
