@@ -2212,7 +2212,7 @@ export function GameTodoList() {
                         <>
                           <div className="mx-3 h-4 w-px bg-gray-300"></div>
                           <div className="flex items-center">
-                            <span className="text-s font-medium text-gray-600 mr-1">组内均分:</span>
+                            <span className="text-xs font-medium text-gray-600 mr-1">组内均分:</span>
                             {(() => {
                               let colorClass = "text-gray-600 bg-gray-100";
                               if (todo.avg_rating >= 4.5) {
