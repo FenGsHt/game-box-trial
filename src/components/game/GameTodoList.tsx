@@ -789,44 +789,24 @@ export function GameTodoList() {
             console.error('获取用户profiles失败:', profilesError);
           }
           
-          // 创建profiles信息映射
-          const profilesMap: Record<string, { username?: string, email?: string }> = {};
+          // 创建用户信息映射
+          const userMap: Record<string, { username?: string, email?: string }> = {};
           
           // 从profiles表填充用户信息
           if (profilesData) {
             profilesData.forEach((profile: { id: string, username?: string, email?: string }) => {
-              profilesMap[profile.id] = { 
+              userMap[profile.id] = { 
                 username: profile.username, 
                 email: profile.email 
               };
             });
           }
           
-          // 从users表获取用户信息（作为备用）
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id, email, username')
-            .in('id', userIds);
-          
-          if (userError) {
-            console.error('获取用户信息失败:', userError);
-          }
-
-          // 创建用户信息映射
-          const userMap: Record<string, { email?: string, username?: string }> = {};
-          
-          // 从users表填充用户信息
-          if (userData) {
-            userData.forEach((user: { id: string, email?: string, username?: string }) => {
-              userMap[user.id] = { email: user.email, username: user.username };
-            });
-          }
-          
-          // 合并留言和用户信息，优先使用profiles表中的信息
+          // 合并留言和用户信息
           const enhancedComments = data.map((comment): GameComment => ({
             ...comment,
-            user_profile_name: profilesMap[comment.user_id]?.username,
-            user_email: profilesMap[comment.user_id]?.email || userMap[comment.user_id]?.email,
+            user_profile_name: userMap[comment.user_id]?.username,
+            user_email: userMap[comment.user_id]?.email,
             user_username: userMap[comment.user_id]?.username
           }));
           
@@ -866,24 +846,24 @@ export function GameTodoList() {
             // 首先从profiles表获取用户信息
             supabase
               .from('profiles')
-              .select('name, email')
+              .select('username, email')
               .eq('id', newComment.user_id)
               .single()
               .then(({ data: profileData }) => {
                 if (profileData) {
-                  newComment.user_profile_name = profileData.name;
+                  newComment.user_profile_name = profileData.username;
                   newComment.user_email = profileData.email;
                 }
                 
-                // 无论profiles表是否有数据，都尝试从users表获取补充信息
+                // 无论profiles表是否有数据，都尝试从profiles表获取补充信息
                 supabase
-                  .from('users')
+                  .from('profiles')
                   .select('email, username')
                   .eq('id', newComment.user_id)
                   .single()
                   .then(({ data: userData }) => {
                     if (userData) {
-                      // 只有在profiles没有提供email时才使用users表的email
+                      // 只有在profiles没有提供email时才使用profiles表的email
                       if (!newComment.user_email) {
                         newComment.user_email = userData.email;
                       }
@@ -911,16 +891,16 @@ export function GameTodoList() {
     };
   }, [todos, user?.id]);
 
-  // 确保当前用户信息已在users表中
+  // 确保当前用户信息已在profiles表中
   useEffect(() => {
     if (!user?.id || !user?.email) return;
 
     // 创建或更新用户profile
     const syncUserProfile = async () => {
       try {
-        // 检查用户是否已存在users表中
+        // 检查用户是否已存在profiles表中
         const { data, error } = await supabase
-          .from('users')
+          .from('profiles')
           .select('id')
           .eq('id', user.id)
           .single();
@@ -933,7 +913,7 @@ export function GameTodoList() {
         // 如果用户不存在，创建用户profile
         if (!data && user.id && user.email) { // 额外检查确保user.id和user.email存在
           const { error: insertError } = await supabase
-            .from('users')
+            .from('profiles')
             .insert([{
               id: user.id,
               email: user.email,
