@@ -66,23 +66,25 @@ jobs:
         port: ${{ secrets.PORT }}
         debug: true
         script: |
-          echo "========== 开始部署 =========="
-          echo "当前时间: $(date)"
-          echo "当前用户: $(whoami)"
-          echo "当前目录: $(pwd)"
-          echo "系统信息: $(uname -a)"
+          echo "========================================="
+          echo "Starting deployment to Windows server..."
+          echo "Current time: $(date)"
+          echo "Current user: $(whoami)"
+          echo "Current directory: $(pwd)"
+          echo "System info: $(uname -a)"
           
-          echo "========== 检查目录 =========="
-          echo "检查 /c/wwwroot/ 目录:"
-          ls -la /c/wwwroot/ 2>/dev/null || echo "路径 /c/wwwroot/ 不存在"
+          echo "========================================="
+          echo "Checking directories..."
+          echo "Checking /c/wwwroot/ directory:"
+          ls -la /c/wwwroot/ 2>/dev/null || echo "Path /c/wwwroot/ does not exist"
           
-          echo "检查 C:/wwwroot/ 目录:"
-          ls -la "C:/wwwroot/" 2>/dev/null || echo "路径 C:/wwwroot/ 不存在"
+          echo "Checking C:/wwwroot/ directory:"
+          ls -la "C:/wwwroot/" 2>/dev/null || echo "Path C:/wwwroot/ does not exist"
           
-          echo "检查 /mnt/c/wwwroot/ 目录:"
-          ls -la /mnt/c/wwwroot/ 2>/dev/null || echo "路径 /mnt/c/wwwroot/ 不存在"
+          echo "Checking /mnt/c/wwwroot/ directory:"
+          ls -la /mnt/c/wwwroot/ 2>/dev/null || echo "Path /mnt/c/wwwroot/ does not exist"
           
-          # 尝试找到正确的项目路径
+          # Try to find the correct project path
           PROJECT_PATH=""
           if [ -d "/c/wwwroot/game_box" ]; then
             PROJECT_PATH="/c/wwwroot/game_box"
@@ -91,74 +93,81 @@ jobs:
           elif [ -d "/mnt/c/wwwroot/game_box" ]; then
             PROJECT_PATH="/mnt/c/wwwroot/game_box"
           else
-            echo "错误: 找不到项目目录，尝试在以下位置搜索:"
-            find / -name "game_box" -type d 2>/dev/null | head -5 || echo "搜索失败"
+            echo "ERROR: Cannot find project directory, searching in following locations:"
+            find / -name "game_box" -type d 2>/dev/null | head -5 || echo "Search failed"
             exit 1
           fi
           
-          echo "找到项目目录: $PROJECT_PATH"
+          echo "Found project directory: $PROJECT_PATH"
           cd "$PROJECT_PATH"
-          echo "成功进入目录: $(pwd)"
+          echo "Successfully entered directory: $(pwd)"
           
-          echo "========== Git 检查 =========="
-          git --version || { echo "Git 不可用"; exit 1; }
+          echo "========================================="
+          echo "Git check..."
+          git --version || { echo "Git is not available"; exit 1; }
           git config --global --add safe.directory "$PROJECT_PATH"
-          git status || { echo "Git status 失败"; exit 1; }
+          git status || { echo "Git status failed"; exit 1; }
           
-          echo "当前分支: $(git branch --show-current)"
-          echo "最新提交: $(git log --oneline -1)"
+          echo "Current branch: $(git branch --show-current)"
+          echo "Latest commit: $(git log --oneline -1)"
           
-          echo "========== 重置和拉取 =========="
+          echo "========================================="
+          echo "Reset and pull..."
           git reset --hard HEAD
           git clean -fd
           git fetch origin
           git pull origin main
-          echo "拉取后提交: $(git log --oneline -1)"
+          echo "After pull commit: $(git log --oneline -1)"
           
-          echo "========== Node.js 环境 =========="
-          # 尝试多种方式加载 Node.js
+          echo "========================================="
+          echo "Node.js environment..."
+          # Try multiple ways to load Node.js
           if [ -f ~/.nvm/nvm.sh ]; then
-            echo "加载 NVM..."
+            echo "Loading NVM..."
             source ~/.nvm/nvm.sh
-            nvm use 18 2>/dev/null || nvm use node 2>/dev/null || echo "NVM 使用失败"
+            nvm use 18 2>/dev/null || nvm use node 2>/dev/null || echo "NVM use failed"
           fi
           
-          # 检查常见的 Node.js 路径
+          # Check common Node.js paths
           export PATH="$PATH:/usr/local/bin:/usr/bin:/bin"
           export PATH="$PATH:$HOME/.nvm/versions/node/*/bin"
           
-          echo "Node.js 版本: $(node --version 2>/dev/null || echo '不可用')"
-          echo "NPM 版本: $(npm --version 2>/dev/null || echo '不可用')"
+          echo "Node.js version: $(node --version 2>/dev/null || echo 'Not available')"
+          echo "NPM version: $(npm --version 2>/dev/null || echo 'Not available')"
           
-          # 如果 Node.js 不可用，尝试其他方法
+          # If Node.js is not available, try other methods
           if ! command -v node >/dev/null 2>&1; then
-            echo "尝试查找 Node.js..."
+            echo "Trying to find Node.js..."
             find /usr -name "node" -type f 2>/dev/null | head -3
-            which node 2>/dev/null || echo "未找到 node 命令"
+            which node 2>/dev/null || echo "Node command not found"
           fi
           
-          echo "========== 安装依赖 =========="
+          echo "========================================="
+          echo "Installing dependencies..."
           if command -v npm >/dev/null 2>&1; then
             npm ci || npm install
-            echo "依赖安装完成"
+            echo "Dependencies installed"
           else
-            echo "错误: NPM 不可用，无法安装依赖"
+            echo "ERROR: NPM not available, cannot install dependencies"
             exit 1
           fi
           
-          echo "========== 构建项目 =========="
-          npm run build || { echo "构建失败"; exit 1; }
-          echo "构建完成"
+          echo "========================================="
+          echo "Building project..."
+          npm run build || { echo "Build failed"; exit 1; }
+          echo "Build completed"
           
-          echo "========== 重启服务 =========="
+          echo "========================================="
+          echo "Restarting service..."
           if command -v pm2 >/dev/null 2>&1; then
-            echo "使用 PM2 重启..."
+            echo "Using PM2 to restart..."
             pm2 restart game_box || pm2 start npm --name "game_box" -- start
             pm2 list
           else
-            echo "PM2 不可用"
+            echo "PM2 not available"
           fi
           
-          echo "========== 部署完成 =========="
-          echo "完成时间: $(date)"
+          echo "========================================="
+          echo "Deployment completed!"
+          echo "Completion time: $(date)"
 

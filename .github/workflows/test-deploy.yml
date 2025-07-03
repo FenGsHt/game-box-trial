@@ -26,66 +26,66 @@ jobs:
         port: ${{ secrets.PORT }}
         debug: true
         script: |
-          echo "========== 基本信息 =========="
-          echo "连接时间: $(date)"
-          echo "主机名: $(hostname)"
-          echo "当前用户: $(whoami)"
-          echo "当前目录: $(pwd)"
-          echo "系统信息: $(uname -a)"
+          echo "========== Basic Info =========="
+          echo "Connection time: $(date)"
+          echo "Hostname: $(hostname)"
+          echo "Current user: $(whoami)"
+          echo "Current directory: $(pwd)"
+          echo "System info: $(uname -a)"
           echo "Shell: $SHELL"
           
-          echo "========== 路径检查 =========="
-          echo "环境变量 PATH: $PATH"
-          echo "Home 目录: $HOME"
+          echo "========== Path Check =========="
+          echo "Environment PATH: $PATH"
+          echo "Home directory: $HOME"
           
-          echo "检查可能的项目路径:"
+          echo "Checking possible project paths:"
           echo "1. /c/wwwroot/"
-          ls -la /c/wwwroot/ 2>/dev/null || echo "  - 不存在"
+          ls -la /c/wwwroot/ 2>/dev/null || echo "  - Does not exist"
           
           echo "2. C:/wwwroot/"
-          ls -la "C:/wwwroot/" 2>/dev/null || echo "  - 不存在"
+          ls -la "C:/wwwroot/" 2>/dev/null || echo "  - Does not exist"
           
           echo "3. /mnt/c/wwwroot/"
-          ls -la /mnt/c/wwwroot/ 2>/dev/null || echo "  - 不存在"
+          ls -la /mnt/c/wwwroot/ 2>/dev/null || echo "  - Does not exist"
           
           echo "4. /cygdrive/c/wwwroot/"
-          ls -la /cygdrive/c/wwwroot/ 2>/dev/null || echo "  - 不存在"
+          ls -la /cygdrive/c/wwwroot/ 2>/dev/null || echo "  - Does not exist"
           
           echo "5. ~/wwwroot/"
-          ls -la ~/wwwroot/ 2>/dev/null || echo "  - 不存在"
+          ls -la ~/wwwroot/ 2>/dev/null || echo "  - Does not exist"
           
-          echo "搜索 game_box 目录:"
-          find / -name "game_box" -type d 2>/dev/null | head -10 || echo "搜索失败"
+          echo "Searching for game_box directory:"
+          find / -name "game_box" -type d 2>/dev/null | head -10 || echo "Search failed"
           
-          echo "========== Git 检查 =========="
-          which git || echo "Git 不在 PATH 中"
-          git --version 2>/dev/null || echo "Git 命令失败"
+          echo "========== Git Check =========="
+          which git || echo "Git not in PATH"
+          git --version 2>/dev/null || echo "Git command failed"
           
-          echo "========== Node.js 检查 =========="
-          which node || echo "Node 不在 PATH 中"
-          node --version 2>/dev/null || echo "Node 命令失败"
+          echo "========== Node.js Check =========="
+          which node || echo "Node not in PATH"
+          node --version 2>/dev/null || echo "Node command failed"
           
-          which npm || echo "NPM 不在 PATH 中"
-          npm --version 2>/dev/null || echo "NPM 命令失败"
+          which npm || echo "NPM not in PATH"
+          npm --version 2>/dev/null || echo "NPM command failed"
           
-          echo "检查 NVM:"
+          echo "Checking NVM:"
           if [ -f ~/.nvm/nvm.sh ]; then
-            echo "找到 NVM，加载中..."
+            echo "Found NVM, loading..."
             source ~/.nvm/nvm.sh
-            nvm --version 2>/dev/null || echo "NVM 加载失败"
-            nvm list 2>/dev/null || echo "NVM list 失败"
+            nvm --version 2>/dev/null || echo "NVM load failed"
+            nvm list 2>/dev/null || echo "NVM list failed"
           else
-            echo "未找到 NVM"
+            echo "NVM not found"
           fi
           
-          echo "========== PM2 检查 =========="
-          which pm2 || echo "PM2 不在 PATH 中"
-          pm2 --version 2>/dev/null || echo "PM2 命令失败"
+          echo "========== PM2 Check =========="
+          which pm2 || echo "PM2 not in PATH"
+          pm2 --version 2>/dev/null || echo "PM2 command failed"
           
-          echo "========== 磁盘空间 =========="
-          df -h 2>/dev/null || echo "磁盘检查失败"
+          echo "========== Disk Space =========="
+          df -h 2>/dev/null || echo "Disk check failed"
           
-          echo "========== 进程信息 =========="
-          ps aux | grep -E "(node|npm|pm2)" | head -5 || echo "进程检查失败"
+          echo "========== Process Info =========="
+          ps aux | grep -E "(node|npm|pm2)" | head -5 || echo "Process check failed"
           
-          echo "========== 测试完成 ==========" 
+          echo "========== Test Complete ==========" 
