@@ -8,11 +8,17 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Add SSH known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
     
     # 简单的连接测试
     - name: Test SSH Connection and Git Pull
-      uses: appleboy/ssh-action@v1.0.3
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
@@ -20,25 +26,35 @@ jobs:
         port: ${{ secrets.PORT }}
         script: |
           echo "========== SSH连接测试 =========="
-          echo "连接时间: $(powershell -Command 'Get-Date')"
+          echo "连接时间: $(date)"
           echo "服务器信息: $(hostname)"
           echo "当前用户: $(whoami)"
           echo "当前目录: $(pwd)"
           
           echo "========== 检查项目目录 =========="
-          if [ -d "C:/wwwroot/game_box" ]; then
-            echo "✓ 项目目录存在"
+          # 检查Windows路径（两种可能的格式）
+          if [ -d "/c/wwwroot/game_box" ]; then
+            echo "✓ 项目目录存在: /c/wwwroot/game_box"
+            cd /c/wwwroot/game_box
+            echo "✓ 成功进入项目目录: $(pwd)"
+          elif [ -d "C:/wwwroot/game_box" ]; then
+            echo "✓ 项目目录存在: C:/wwwroot/game_box"
             cd "C:/wwwroot/game_box"
             echo "✓ 成功进入项目目录: $(pwd)"
           else
-            echo "✗ 项目目录不存在: C:/wwwroot/game_box"
-            echo "尝试列出 C:/wwwroot/ 目录内容:"
-            ls -la "C:/wwwroot/" || echo "无法访问 C:/wwwroot/"
+            echo "✗ 项目目录不存在"
+            echo "尝试列出可能的目录:"
+            ls -la /c/ 2>/dev/null || echo "无法访问 /c/"
+            ls -la /c/wwwroot/ 2>/dev/null || echo "无法访问 /c/wwwroot/"
             exit 1
           fi
           
           echo "========== Git状态检查 =========="
           echo "Git版本: $(git --version)"
+          
+          # 设置安全目录（Windows Git可能需要）
+          git config --global --add safe.directory $(pwd)
+          
           echo "当前分支: $(git branch --show-current)"
           echo "远程仓库: $(git remote -v)"
           echo "最新提交: $(git log --oneline -1)"
@@ -63,9 +79,23 @@ jobs:
           fi
           
           echo "========== 环境检查 =========="
+          
+          # 检查NVM
+          if [ -f ~/.nvm/nvm.sh ]; then
+            echo "✓ 找到NVM，加载环境..."
+            source ~/.nvm/nvm.sh
+            nvm --version
+            echo "可用的Node.js版本:"
+            nvm list
+          fi
+          
           echo "Node.js版本: $(node --version || echo 'Node.js不可用')"
           echo "NPM版本: $(npm --version || echo 'NPM不可用')"
           echo "PM2版本: $(pm2 --version || echo 'PM2不可用')"
           
+          echo "========== 系统信息 =========="
+          echo "操作系统: $(uname -a)"
+          echo "环境变量 PATH: $PATH"
+          
           echo "========== 测试完成 =========="
-          echo "完成时间: $(powershell -Command 'Get-Date')" 
+          echo "完成时间: $(date)" 
