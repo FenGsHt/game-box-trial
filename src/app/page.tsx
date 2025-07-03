@@ -10,7 +10,7 @@ export default function Home() {
       {/* 游戏组和待玩清单卡片区域 */}
       <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-8">游戏管理</h2>
+          <h2 className="text-3xl font-bold text-center mb-8">游戏管理 V1.0</h2>
           <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
             管理您的游戏组与待玩清单，与好友一起规划您的游戏之旅
           </p>
