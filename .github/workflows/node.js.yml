@@ -56,19 +56,8 @@ jobs:
     - name: Build project
       run: npm run build --if-present
 
-    # 上传部署脚本到服务器
-    - name: Upload deploy script to server
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.PRIVATE_KEY }}
-        port: ${{ secrets.PORT }}
-        source: "deploy-remote.bat"
-        target: "C:/wwwroot/game_box/"
-
-    # 执行部署脚本
-    - name: Execute deployment script
+    # 直接通过SSH执行部署脚本
+    - name: Execute deployment script via SSH
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
@@ -77,7 +66,5 @@ jobs:
         port: ${{ secrets.PORT }}
         timeout: 600s
         command_timeout: 600s
-        script: |
-          cd C:\wwwroot\game_box
-          .\deploy-remote.bat
+        script: C:\wwwroot\game_box\deploy-remote.bat
 

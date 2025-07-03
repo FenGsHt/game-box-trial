@@ -16,19 +16,8 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
     
-    # 上传测试脚本到服务器
-    - name: Upload test script to server
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.PRIVATE_KEY }}
-        port: ${{ secrets.PORT }}
-        source: "test-remote.bat"
-        target: "C:/temp/"
-
-    # 执行测试脚本
-    - name: Execute test script
+    # 直接执行测试脚本
+    - name: Execute test script via SSH
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
@@ -37,6 +26,4 @@ jobs:
         port: ${{ secrets.PORT }}
         timeout: 300s
         command_timeout: 300s
-        script: |
-          cd C:\temp
-          .\test-remote.bat 
+        script: C:\wwwroot\game_box\test-remote.bat 

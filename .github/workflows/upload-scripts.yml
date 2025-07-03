@@ -1,0 +1,40 @@
+name: Upload Scripts (One-time)
+
+on:
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  upload-scripts:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Add SSH known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+    
+    # 上传部署脚本到服务器
+    - name: Upload deploy scripts to server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        port: ${{ secrets.PORT }}
+        source: "deploy-remote.bat,test-remote.bat"
+        target: "C:/wwwroot/game_box/"
+    
+    # 验证文件上传成功
+    - name: Verify uploaded files
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          dir C:\wwwroot\game_box\*.bat
+          echo Upload completed successfully! 
