@@ -70,57 +70,15 @@ if errorlevel 1 (
 echo After pull commit:
 git log --oneline -1
 
-REM Node.js 环境检查
+REM 构建项目
 echo ========================================
-echo Checking Node.js environment...
-
-REM 检查 Node.js 是否可用
-where node >nul 2>&1
-if errorlevel 1 (
-    echo Node.js not found in PATH, trying to load NVM...
-    
-    REM 尝试加载 NVM
-    if exist "%USERPROFILE%\.nvm\nvm.exe" (
-        echo Loading NVM...
-        call "%USERPROFILE%\.nvm\nvm.exe" use 18.15.0
-    ) else (
-        echo ERROR: Node.js and NVM not found
-        exit /b 1
-    )
-)
-
-echo Node.js version:
-node --version
-if errorlevel 1 (
-    echo ERROR: Node.js command failed
-    exit /b 1
-)
-
-echo NPM version:
-npm --version
-
-
-
-
 echo Building project...
 npm run build
-
 echo Build completed successfully
 
 REM 重启服务
 echo ========================================
 echo Restarting service...
-
-REM 检查 PM2 是否可用
-where pm2 >nul 2>&1
-if errorlevel 1 (
-    echo PM2 not found, trying to install globally...
-    npm install -g pm2
-    if errorlevel 1 (
-        echo ERROR: Failed to install PM2
-        exit /b 1
-    )
-)
 
 echo Using PM2 to restart service...
 pm2 restart game_box
