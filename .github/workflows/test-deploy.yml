@@ -17,85 +17,75 @@ jobs:
         ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
     
     # 简单的连接测试
-    - name: Test SSH Connection and Git Pull
+    - name: Test SSH Connection and Environment
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
+        debug: true
         script: |
-          echo "========== SSH连接测试 =========="
+          echo "========== 基本信息 =========="
           echo "连接时间: $(date)"
-          echo "服务器信息: $(hostname)"
+          echo "主机名: $(hostname)"
           echo "当前用户: $(whoami)"
           echo "当前目录: $(pwd)"
+          echo "系统信息: $(uname -a)"
+          echo "Shell: $SHELL"
           
-          echo "========== 检查项目目录 =========="
-          # 检查Windows路径（两种可能的格式）
-          if [ -d "/c/wwwroot/game_box" ]; then
-            echo "✓ 项目目录存在: /c/wwwroot/game_box"
-            cd /c/wwwroot/game_box
-            echo "✓ 成功进入项目目录: $(pwd)"
-          elif [ -d "C:/wwwroot/game_box" ]; then
-            echo "✓ 项目目录存在: C:/wwwroot/game_box"
-            cd "C:/wwwroot/game_box"
-            echo "✓ 成功进入项目目录: $(pwd)"
-          else
-            echo "✗ 项目目录不存在"
-            echo "尝试列出可能的目录:"
-            ls -la /c/ 2>/dev/null || echo "无法访问 /c/"
-            ls -la /c/wwwroot/ 2>/dev/null || echo "无法访问 /c/wwwroot/"
-            exit 1
-          fi
-          
-          echo "========== Git状态检查 =========="
-          echo "Git版本: $(git --version)"
-          
-          # 设置安全目录（Windows Git可能需要）
-          git config --global --add safe.directory $(pwd)
-          
-          echo "当前分支: $(git branch --show-current)"
-          echo "远程仓库: $(git remote -v)"
-          echo "最新提交: $(git log --oneline -1)"
-          
-          echo "========== 检查工作区状态 =========="
-          git status
-          
-          echo "========== 尝试获取更新 =========="
-          echo "执行 git fetch..."
-          git fetch origin || echo "Git fetch 失败"
-          
-          echo "检查是否有新提交..."
-          COMMITS_BEHIND=$(git rev-list HEAD..origin/main --count)
-          echo "本地落后远程 $COMMITS_BEHIND 个提交"
-          
-          if [ "$COMMITS_BEHIND" -gt 0 ]; then
-            echo "发现新提交，尝试拉取..."
-            git pull origin main || echo "Git pull 失败"
-            echo "拉取后的最新提交: $(git log --oneline -1)"
-          else
-            echo "代码已是最新版本"
-          fi
-          
-          echo "========== 环境检查 =========="
-          
-          # 检查NVM
-          if [ -f ~/.nvm/nvm.sh ]; then
-            echo "✓ 找到NVM，加载环境..."
-            source ~/.nvm/nvm.sh
-            nvm --version
-            echo "可用的Node.js版本:"
-            nvm list
-          fi
-          
-          echo "Node.js版本: $(node --version || echo 'Node.js不可用')"
-          echo "NPM版本: $(npm --version || echo 'NPM不可用')"
-          echo "PM2版本: $(pm2 --version || echo 'PM2不可用')"
-          
-          echo "========== 系统信息 =========="
-          echo "操作系统: $(uname -a)"
+          echo "========== 路径检查 =========="
           echo "环境变量 PATH: $PATH"
+          echo "Home 目录: $HOME"
           
-          echo "========== 测试完成 =========="
-          echo "完成时间: $(date)" 
+          echo "检查可能的项目路径:"
+          echo "1. /c/wwwroot/"
+          ls -la /c/wwwroot/ 2>/dev/null || echo "  - 不存在"
+          
+          echo "2. C:/wwwroot/"
+          ls -la "C:/wwwroot/" 2>/dev/null || echo "  - 不存在"
+          
+          echo "3. /mnt/c/wwwroot/"
+          ls -la /mnt/c/wwwroot/ 2>/dev/null || echo "  - 不存在"
+          
+          echo "4. /cygdrive/c/wwwroot/"
+          ls -la /cygdrive/c/wwwroot/ 2>/dev/null || echo "  - 不存在"
+          
+          echo "5. ~/wwwroot/"
+          ls -la ~/wwwroot/ 2>/dev/null || echo "  - 不存在"
+          
+          echo "搜索 game_box 目录:"
+          find / -name "game_box" -type d 2>/dev/null | head -10 || echo "搜索失败"
+          
+          echo "========== Git 检查 =========="
+          which git || echo "Git 不在 PATH 中"
+          git --version 2>/dev/null || echo "Git 命令失败"
+          
+          echo "========== Node.js 检查 =========="
+          which node || echo "Node 不在 PATH 中"
+          node --version 2>/dev/null || echo "Node 命令失败"
+          
+          which npm || echo "NPM 不在 PATH 中"
+          npm --version 2>/dev/null || echo "NPM 命令失败"
+          
+          echo "检查 NVM:"
+          if [ -f ~/.nvm/nvm.sh ]; then
+            echo "找到 NVM，加载中..."
+            source ~/.nvm/nvm.sh
+            nvm --version 2>/dev/null || echo "NVM 加载失败"
+            nvm list 2>/dev/null || echo "NVM list 失败"
+          else
+            echo "未找到 NVM"
+          fi
+          
+          echo "========== PM2 检查 =========="
+          which pm2 || echo "PM2 不在 PATH 中"
+          pm2 --version 2>/dev/null || echo "PM2 命令失败"
+          
+          echo "========== 磁盘空间 =========="
+          df -h 2>/dev/null || echo "磁盘检查失败"
+          
+          echo "========== 进程信息 =========="
+          ps aux | grep -E "(node|npm|pm2)" | head -5 || echo "进程检查失败"
+          
+          echo "========== 测试完成 ==========" 
