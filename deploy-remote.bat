@@ -170,6 +170,4 @@ pm2 list
 echo ========================================
 echo Deployment completed successfully!
 echo Completion time: %date% %time%
-echo ========================================
-
-pause 
+echo ======================================== 
