@@ -76,7 +76,7 @@ echo Building project...
 npm run build
 echo Build completed successfully
 
-REM 重启服务
+REM 重启服务1
 echo ========================================
 echo Restarting service...
 
