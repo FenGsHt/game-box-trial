@@ -59,15 +59,104 @@ jobs:
         key: ${{ secrets.PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
         script: |
+          echo "========================================"
           echo "开始部署到Windows服务器..."
-          cd C:\wwwroot\game_box
-          echo "进入项目目录: C:\wwwroot\game_box"
+          echo "部署时间: %date% %time%"
+          echo "========================================"
+          
+          REM 检查当前目录
+          echo "当前工作目录: %cd%"
+          
+          REM 进入项目目录并验证
+          if not exist "C:\wwwroot\game_box" (
+            echo "错误: 项目目录 C:\wwwroot\game_box 不存在！"
+            exit /b 1
+          )
+          
+          cd /d C:\wwwroot\game_box
+          if errorlevel 1 (
+            echo "错误: 无法进入项目目录 C:\wwwroot\game_box"
+            exit /b 1
+          )
+          
+          echo "成功进入项目目录: %cd%"
+          
+          REM 检查Git状态
+          echo "========================================"
+          echo "检查Git状态..."
+          git status
+          if errorlevel 1 (
+            echo "错误: Git命令执行失败，请检查Git是否正确安装"
+            exit /b 1
+          )
+          
+          REM 显示当前分支和最新提交
+          echo "当前分支:"
+          git branch
+          echo "最新提交:"
+          git log --oneline -5
+          
+          REM 强制重置本地更改（如果有的话）
+          echo "========================================"
+          echo "重置本地更改..."
+          git reset --hard HEAD
+          git clean -fd
+          
+          REM 拉取最新代码
+          echo "========================================"
+          echo "拉取最新代码..."
+          git fetch origin
+          if errorlevel 1 (
+            echo "错误: Git fetch 失败"
+            exit /b 1
+          )
+          
           git pull origin main
-          echo "代码拉取完成"
+          if errorlevel 1 (
+            echo "错误: Git pull 失败"
+            git status
+            exit /b 1
+          )
+          
+          echo "代码拉取完成！"
+          
+          REM 显示更新后的状态
+          echo "========================================"
+          echo "更新后的Git状态:"
+          git log --oneline -3
+          git status
+          
+          REM 安装依赖
+          echo "========================================"
+          echo "安装项目依赖..."
           npm ci
+          if errorlevel 1 (
+            echo "错误: 依赖安装失败"
+            exit /b 1
+          )
           echo "依赖安装完成"
+          
+          REM 构建项目
+          echo "========================================"
+          echo "构建项目..."
           npm run build
+          if errorlevel 1 (
+            echo "错误: 项目构建失败"
+            exit /b 1
+          )
           echo "项目构建完成"
+          
+          REM 重启服务
+          echo "========================================"
+          echo "重启服务..."
           pm2 restart game_box
-          echo "服务重启完成，部署成功！"
+          if errorlevel 1 (
+            echo "警告: PM2重启可能失败，尝试手动启动"
+            pm2 start npm --name "game_box" -- start
+          )
+          
+          echo "========================================"
+          echo "部署完成！服务重启成功"
+          echo "完成时间: %date% %time%"
+          echo "========================================"
 
