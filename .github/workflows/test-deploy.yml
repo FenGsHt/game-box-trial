@@ -16,76 +16,27 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
     
-    # 简单的连接测试
-    - name: Test SSH Connection and Environment
+    # 上传测试脚本到服务器
+    - name: Upload test script to server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        port: ${{ secrets.PORT }}
+        source: "test-remote.bat"
+        target: "C:/temp/"
+
+    # 执行测试脚本
+    - name: Execute test script
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
-        debug: true
+        timeout: 300s
+        command_timeout: 300s
         script: |
-          echo "========== Basic Info =========="
-          echo "Connection time: $(date)"
-          echo "Hostname: $(hostname)"
-          echo "Current user: $(whoami)"
-          echo "Current directory: $(pwd)"
-          echo "System info: $(uname -a)"
-          echo "Shell: $SHELL"
-          
-          echo "========== Path Check =========="
-          echo "Environment PATH: $PATH"
-          echo "Home directory: $HOME"
-          
-          echo "Checking possible project paths:"
-          echo "1. /c/wwwroot/"
-          ls -la /c/wwwroot/ 2>/dev/null || echo "  - Does not exist"
-          
-          echo "2. C:/wwwroot/"
-          ls -la "C:/wwwroot/" 2>/dev/null || echo "  - Does not exist"
-          
-          echo "3. /mnt/c/wwwroot/"
-          ls -la /mnt/c/wwwroot/ 2>/dev/null || echo "  - Does not exist"
-          
-          echo "4. /cygdrive/c/wwwroot/"
-          ls -la /cygdrive/c/wwwroot/ 2>/dev/null || echo "  - Does not exist"
-          
-          echo "5. ~/wwwroot/"
-          ls -la ~/wwwroot/ 2>/dev/null || echo "  - Does not exist"
-          
-          echo "Searching for game_box directory:"
-          find / -name "game_box" -type d 2>/dev/null | head -10 || echo "Search failed"
-          
-          echo "========== Git Check =========="
-          which git || echo "Git not in PATH"
-          git --version 2>/dev/null || echo "Git command failed"
-          
-          echo "========== Node.js Check =========="
-          which node || echo "Node not in PATH"
-          node --version 2>/dev/null || echo "Node command failed"
-          
-          which npm || echo "NPM not in PATH"
-          npm --version 2>/dev/null || echo "NPM command failed"
-          
-          echo "Checking NVM:"
-          if [ -f ~/.nvm/nvm.sh ]; then
-            echo "Found NVM, loading..."
-            source ~/.nvm/nvm.sh
-            nvm --version 2>/dev/null || echo "NVM load failed"
-            nvm list 2>/dev/null || echo "NVM list failed"
-          else
-            echo "NVM not found"
-          fi
-          
-          echo "========== PM2 Check =========="
-          which pm2 || echo "PM2 not in PATH"
-          pm2 --version 2>/dev/null || echo "PM2 command failed"
-          
-          echo "========== Disk Space =========="
-          df -h 2>/dev/null || echo "Disk check failed"
-          
-          echo "========== Process Info =========="
-          ps aux | grep -E "(node|npm|pm2)" | head -5 || echo "Process check failed"
-          
-          echo "========== Test Complete ==========" 
+          cd C:\temp
+          .\test-remote.bat 

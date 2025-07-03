@@ -36,7 +36,13 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Add SSH known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -50,24 +56,28 @@ jobs:
     - name: Build project
       run: npm run build --if-present
 
-    # 部署到Windows服务器
-    - name: Deploy to Windows Server via SSH
-      uses: appleboy/ssh-action@v1.0.3
+    # 上传部署脚本到服务器
+    - name: Upload deploy script to server
+      uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
+        source: "deploy-remote.bat"
+        target: "C:/wwwroot/game_box/"
+
+    # 执行部署脚本
+    - name: Execute deployment script
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        port: ${{ secrets.PORT }}
+        timeout: 600s
+        command_timeout: 600s
         script: |
-          echo "开始部署到Windows服务器..."
           cd C:\wwwroot\game_box
-          echo "进入项目目录: C:\wwwroot\game_box"
-          git pull origin main
-          echo "代码拉取完成"
-          npm ci
-          echo "依赖安装完成"
-          npm run build
-          echo "项目构建完成"
-          pm2 restart game_box
-          echo "服务重启完成，部署成功！"
+          .\deploy-remote.bat
 
