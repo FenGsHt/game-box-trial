@@ -105,4 +105,4 @@ if errorlevel 1 (
 echo ========================================
 echo Deployment completed successfully!
 echo Completion time: %date% %time%
-echo ======================================== 
+echo =======================================
