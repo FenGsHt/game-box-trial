@@ -76,38 +76,31 @@ echo Building project...
 npm run build
 echo Build completed successfully
 
-REM 重启服务1
+REM 重启服务
 echo ========================================
 echo Restarting service...
 
-echo Checking if game_box process exists...
-pm2 describe game_box >nul 2>&1
+echo Stopping any existing Node.js processes...
+taskkill /f /im node.exe >nul 2>&1
+echo Previous processes stopped
+
+echo Starting service with npm...
+start /b npm start
 if errorlevel 1 (
-    echo game_box process not found, starting fresh...
-    pm2 start npm --name "game_box" -- start
-    if errorlevel 1 (
-        echo ERROR: Failed to start service with PM2
-        exit /b 1
-    )
-    echo Service started successfully
-) else (
-    echo game_box process found, restarting...
-    pm2 restart game_box
-    if errorlevel 1 (
-        echo PM2 restart failed, trying to start fresh...
-        pm2 stop game_box >nul 2>&1
-        pm2 delete game_box >nul 2>&1
-        pm2 start npm --name "game_box" -- start
-        if errorlevel 1 (
-            echo ERROR: Failed to start service with PM2
-            exit /b 1
-        )
-    )
-    echo Service restarted successfully
+    echo ERROR: Failed to start service with npm
+    exit /b 1
 )
 
-echo Service status:
-pm2 list
+echo Waiting for service to start...
+timeout /t 3 /nobreak >nul
+
+echo Checking if service is running...
+tasklist | findstr node.exe >nul
+if errorlevel 1 (
+    echo WARNING: Node.js process not found in task list
+) else (
+    echo Service is running successfully
+)
 
 echo ========================================
 echo Deployment completed successfully!
