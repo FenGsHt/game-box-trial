@@ -80,17 +80,30 @@ REM 重启服务
 echo ========================================
 echo Restarting service...
 
-echo Using PM2 to restart service...
-pm2 restart game_box
+echo Checking if game_box process exists...
+pm2 describe game_box >nul 2>&1
 if errorlevel 1 (
-    echo PM2 restart failed, trying to start fresh...
-    pm2 stop game_box >nul 2>&1
-    pm2 delete game_box >nul 2>&1
+    echo game_box process not found, starting fresh...
     pm2 start npm --name "game_box" -- start
     if errorlevel 1 (
         echo ERROR: Failed to start service with PM2
         exit /b 1
     )
+    echo Service started successfully
+) else (
+    echo game_box process found, restarting...
+    pm2 restart game_box
+    if errorlevel 1 (
+        echo PM2 restart failed, trying to start fresh...
+        pm2 stop game_box >nul 2>&1
+        pm2 delete game_box >nul 2>&1
+        pm2 start npm --name "game_box" -- start
+        if errorlevel 1 (
+            echo ERROR: Failed to start service with PM2
+            exit /b 1
+        )
+    )
+    echo Service restarted successfully
 )
 
 echo Service status:
