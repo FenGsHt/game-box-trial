@@ -78,33 +78,36 @@ echo Build completed successfully
 
 REM 重启服务
 echo ========================================
-echo Restarting service...
+echo Restarting service with PM2...
 
-echo Stopping existing game_box service...
-REM 查找并停止在3000端口运行的进程（Next.js默认端口）
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr :3000') do (
-    echo Stopping process ID: %%a
-    taskkill /f /pid %%a >nul 2>&1
-)
-
-echo Starting service with npm...
-start /b npm start
+echo Checking if game_box process exists...
+pm2 describe game_box >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Failed to start service with npm
-    exit /b 1
-)
-
-echo Waiting for service to start...
-timeout /t 5 /nobreak >nul
-
-echo Checking if service is running on port 3000...
-netstat -ano | findstr :3000 >nul
-if errorlevel 1 (
-    echo WARNING: No process found listening on port 3000
+    echo game_box process not found, starting fresh...
+    pm2 start npm --name "game_box" -- start
+    if errorlevel 1 (
+        echo ERROR: Failed to start service with PM2
+        exit /b 1
+    )
+    echo Service started successfully
 ) else (
-    echo Service is running successfully on port 3000
-    netstat -ano | findstr :3000
+    echo game_box process found, restarting...
+    pm2 restart game_box
+    if errorlevel 1 (
+        echo PM2 restart failed, trying to start fresh...
+        pm2 stop game_box >nul 2>&1
+        pm2 delete game_box >nul 2>&1
+        pm2 start npm --name "game_box" -- start
+        if errorlevel 1 (
+            echo ERROR: Failed to start service with PM2
+            exit /b 1
+        )
+    )
+    echo Service restarted successfully
 )
+
+echo Service status:
+pm2 list
 
 echo ========================================
 echo Deployment completed successfully!
