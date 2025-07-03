@@ -80,9 +80,12 @@ REM 重启服务
 echo ========================================
 echo Restarting service...
 
-echo Stopping any existing Node.js processes...
-taskkill /f /im node.exe >nul 2>&1
-echo Previous processes stopped
+echo Stopping existing game_box service...
+REM 查找并停止在3000端口运行的进程（Next.js默认端口）
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :3000') do (
+    echo Stopping process ID: %%a
+    taskkill /f /pid %%a >nul 2>&1
+)
 
 echo Starting service with npm...
 start /b npm start
@@ -92,14 +95,15 @@ if errorlevel 1 (
 )
 
 echo Waiting for service to start...
-timeout /t 3 /nobreak >nul
+timeout /t 5 /nobreak >nul
 
-echo Checking if service is running...
-tasklist | findstr node.exe >nul
+echo Checking if service is running on port 3000...
+netstat -ano | findstr :3000 >nul
 if errorlevel 1 (
-    echo WARNING: Node.js process not found in task list
+    echo WARNING: No process found listening on port 3000
 ) else (
-    echo Service is running successfully
+    echo Service is running successfully on port 3000
+    netstat -ano | findstr :3000
 )
 
 echo ========================================
