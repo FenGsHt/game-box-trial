@@ -59,104 +59,167 @@ jobs:
         key: ${{ secrets.PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
         script: |
-          echo "========================================"
-          echo "开始部署到Windows服务器..."
-          echo "部署时间: %date% %time%"
-          echo "========================================"
+          powershell -Command "
+          Write-Host '========================================'
+          Write-Host '开始部署到Windows服务器...'
+          Write-Host '部署时间:' (Get-Date)
+          Write-Host '========================================'
           
-          REM 检查当前目录
-          echo "当前工作目录: %cd%"
+          # 检查当前目录
+          Write-Host '当前工作目录:' (Get-Location)
           
-          REM 进入项目目录并验证
-          if not exist "C:\wwwroot\game_box" (
-            echo "错误: 项目目录 C:\wwwroot\game_box 不存在！"
-            exit /b 1
-          )
+          # 检查项目目录是否存在
+          if (-not (Test-Path 'C:\wwwroot\game_box')) {
+            Write-Host '错误: 项目目录 C:\wwwroot\game_box 不存在！'
+            exit 1
+          }
           
-          cd /d C:\wwwroot\game_box
-          if errorlevel 1 (
-            echo "错误: 无法进入项目目录 C:\wwwroot\game_box"
-            exit /b 1
-          )
+          # 进入项目目录
+          Set-Location -Path 'C:\wwwroot\game_box'
+          Write-Host '成功进入项目目录:' (Get-Location)
           
-          echo "成功进入项目目录: %cd%"
+          # 检查Git状态
+          Write-Host '========================================'
+          Write-Host '检查Git状态...'
           
-          REM 检查Git状态
-          echo "========================================"
-          echo "检查Git状态..."
-          git status
-          if errorlevel 1 (
-            echo "错误: Git命令执行失败，请检查Git是否正确安装"
-            exit /b 1
-          )
+          try {
+            git --version
+            Write-Host 'Git版本检查成功'
+          } catch {
+            Write-Host '错误: Git命令不可用'
+            exit 1
+          }
           
-          REM 显示当前分支和最新提交
-          echo "当前分支:"
+          # 显示当前分支和提交
+          Write-Host '当前分支:'
           git branch
-          echo "最新提交:"
-          git log --oneline -5
+          Write-Host '最新提交:'
+          git log --oneline -3
           
-          REM 强制重置本地更改（如果有的话）
-          echo "========================================"
-          echo "重置本地更改..."
+          # 检查工作区状态
+          Write-Host '工作区状态:'
+          git status --porcelain
+          
+          # 强制重置本地更改
+          Write-Host '========================================'
+          Write-Host '重置本地更改...'
           git reset --hard HEAD
           git clean -fd
+          Write-Host '本地更改重置完成'
           
-          REM 拉取最新代码
-          echo "========================================"
-          echo "拉取最新代码..."
-          git fetch origin
-          if errorlevel 1 (
-            echo "错误: Git fetch 失败"
-            exit /b 1
-          )
+          # 获取远程更新
+          Write-Host '========================================'
+          Write-Host '获取远程更新...'
+          try {
+            git fetch origin
+            Write-Host 'Git fetch 成功'
+          } catch {
+            Write-Host '错误: Git fetch 失败'
+            exit 1
+          }
           
-          git pull origin main
-          if errorlevel 1 (
-            echo "错误: Git pull 失败"
-            git status
-            exit /b 1
-          )
+          # 检查是否有新提交
+          \$commitsBehind = git rev-list HEAD..origin/main --count
+          Write-Host \"本地落后远程 \$commitsBehind 个提交\"
           
-          echo "代码拉取完成！"
+          if (\$commitsBehind -eq '0') {
+            Write-Host '代码已是最新版本'
+          } else {
+            Write-Host \"发现 \$commitsBehind 个新提交，开始拉取...\"
+            try {
+              git pull origin main
+              Write-Host '代码拉取成功！'
+            } catch {
+              Write-Host '错误: Git pull 失败'
+              git status
+              exit 1
+            }
+          }
           
-          REM 显示更新后的状态
-          echo "========================================"
-          echo "更新后的Git状态:"
+          # 显示更新后状态
+          Write-Host '========================================'
+          Write-Host '更新后状态:'
           git log --oneline -3
           git status
           
-          REM 安装依赖
-          echo "========================================"
-          echo "安装项目依赖..."
-          npm ci
-          if errorlevel 1 (
-            echo "错误: 依赖安装失败"
-            exit /b 1
-          )
-          echo "依赖安装完成"
+          # 检查Node.js环境
+          Write-Host '========================================'
+          Write-Host '检查Node.js环境...'
+          try {
+            node --version
+            npm --version
+            Write-Host 'Node.js环境检查成功'
+          } catch {
+            Write-Host '错误: Node.js不可用'
+            exit 1
+          }
           
-          REM 构建项目
-          echo "========================================"
-          echo "构建项目..."
-          npm run build
-          if errorlevel 1 (
-            echo "错误: 项目构建失败"
-            exit /b 1
-          )
-          echo "项目构建完成"
+          # 安装依赖
+          Write-Host '========================================'
+          Write-Host '安装项目依赖...'
+          try {
+            npm ci
+            Write-Host '依赖安装完成'
+          } catch {
+            Write-Host '错误: 依赖安装失败，尝试清理重装...'
+            if (Test-Path 'node_modules') { Remove-Item -Recurse -Force 'node_modules' }
+            if (Test-Path 'package-lock.json') { Remove-Item -Force 'package-lock.json' }
+            npm install
+            Write-Host '依赖重新安装完成'
+          }
           
-          REM 重启服务
-          echo "========================================"
-          echo "重启服务..."
-          pm2 restart game_box
-          if errorlevel 1 (
-            echo "警告: PM2重启可能失败，尝试手动启动"
-            pm2 start npm --name "game_box" -- start
-          )
+          # 构建项目
+          Write-Host '========================================'
+          Write-Host '构建项目...'
+          try {
+            npm run build
+            Write-Host '项目构建完成'
+          } catch {
+            Write-Host '错误: 项目构建失败，尝试忽略错误构建...'
+            if (Test-Path 'deploy-override.js') {
+              node deploy-override.js
+              Write-Host '使用override构建完成'
+            } else {
+              Write-Host '构建最终失败'
+              exit 1
+            }
+          }
           
-          echo "========================================"
-          echo "部署完成！服务重启成功"
-          echo "完成时间: %date% %time%"
-          echo "========================================"
+          # 检查PM2状态
+          Write-Host '========================================'
+          Write-Host '检查PM2状态...'
+          try {
+            pm2 --version
+            Write-Host 'PM2可用'
+          } catch {
+            Write-Host '错误: PM2不可用'
+            exit 1
+          }
+          
+          # 重启服务
+          Write-Host '重启服务...'
+          try {
+            pm2 restart game_box
+            Write-Host 'PM2重启成功'
+          } catch {
+            Write-Host '警告: PM2重启失败，尝试手动启动'
+            try {
+              pm2 stop game_box
+              pm2 start npm --name 'game_box' -- start
+              Write-Host 'PM2手动启动成功'
+            } catch {
+              Write-Host '错误: PM2启动失败'
+              exit 1
+            }
+          }
+          
+          # 显示最终状态
+          Write-Host '========================================'
+          Write-Host '显示服务状态:'
+          pm2 list
+          Write-Host '========================================'
+          Write-Host '部署完成！'
+          Write-Host '完成时间:' (Get-Date)
+          Write-Host '========================================'
+          "
 

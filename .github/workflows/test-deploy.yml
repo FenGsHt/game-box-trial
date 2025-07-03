@@ -1,0 +1,71 @@
+name: Test Deploy
+
+on:
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  test-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    # 简单的连接测试
+    - name: Test SSH Connection and Git Pull
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          echo "========== SSH连接测试 =========="
+          echo "连接时间: $(powershell -Command 'Get-Date')"
+          echo "服务器信息: $(hostname)"
+          echo "当前用户: $(whoami)"
+          echo "当前目录: $(pwd)"
+          
+          echo "========== 检查项目目录 =========="
+          if [ -d "C:/wwwroot/game_box" ]; then
+            echo "✓ 项目目录存在"
+            cd "C:/wwwroot/game_box"
+            echo "✓ 成功进入项目目录: $(pwd)"
+          else
+            echo "✗ 项目目录不存在: C:/wwwroot/game_box"
+            echo "尝试列出 C:/wwwroot/ 目录内容:"
+            ls -la "C:/wwwroot/" || echo "无法访问 C:/wwwroot/"
+            exit 1
+          fi
+          
+          echo "========== Git状态检查 =========="
+          echo "Git版本: $(git --version)"
+          echo "当前分支: $(git branch --show-current)"
+          echo "远程仓库: $(git remote -v)"
+          echo "最新提交: $(git log --oneline -1)"
+          
+          echo "========== 检查工作区状态 =========="
+          git status
+          
+          echo "========== 尝试获取更新 =========="
+          echo "执行 git fetch..."
+          git fetch origin || echo "Git fetch 失败"
+          
+          echo "检查是否有新提交..."
+          COMMITS_BEHIND=$(git rev-list HEAD..origin/main --count)
+          echo "本地落后远程 $COMMITS_BEHIND 个提交"
+          
+          if [ "$COMMITS_BEHIND" -gt 0 ]; then
+            echo "发现新提交，尝试拉取..."
+            git pull origin main || echo "Git pull 失败"
+            echo "拉取后的最新提交: $(git log --oneline -1)"
+          else
+            echo "代码已是最新版本"
+          fi
+          
+          echo "========== 环境检查 =========="
+          echo "Node.js版本: $(node --version || echo 'Node.js不可用')"
+          echo "NPM版本: $(npm --version || echo 'NPM不可用')"
+          echo "PM2版本: $(pm2 --version || echo 'PM2不可用')"
+          
+          echo "========== 测试完成 =========="
+          echo "完成时间: $(powershell -Command 'Get-Date')" 
