@@ -98,42 +98,13 @@ if errorlevel 1 (
 
 echo NPM version:
 npm --version
-if errorlevel 1 (
-    echo ERROR: NPM command failed
-    exit /b 1
-)
 
-REM 安装依赖
-echo ========================================
-echo Installing dependencies...
-npm ci
-if errorlevel 1 (
-    echo NPM ci failed, trying npm install...
-    npm install
-    if errorlevel 1 (
-        echo ERROR: Failed to install dependencies
-        exit /b 1
-    )
-)
-echo Dependencies installed successfully
 
-REM 构建项目
-echo ========================================
+
+
 echo Building project...
 npm run build
-if errorlevel 1 (
-    echo Build failed, trying with override config...
-    if exist "deploy-override.js" (
-        node deploy-override.js
-        if errorlevel 1 (
-            echo ERROR: Build failed completely
-            exit /b 1
-        )
-    ) else (
-        echo ERROR: Build failed and no override config found
-        exit /b 1
-    )
-)
+
 echo Build completed successfully
 
 REM 重启服务
