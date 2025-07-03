@@ -111,7 +111,7 @@ jobs:
           echo "Current branch: $(git branch --show-current)"
           echo "Latest commit: $(git log --oneline -1)"
           
-          echo "========================================="
+          echo "========================================"
           echo "Reset and pull..."
           git reset --hard HEAD
           git clean -fd
