@@ -59,9 +59,15 @@ jobs:
         key: ${{ secrets.PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
         script: |
+          echo "开始部署到Windows服务器..."
           cd C:\wwwroot\game_box
+          echo "进入项目目录: C:\wwwroot\game_box"
           git pull origin main
+          echo "代码拉取完成"
           npm ci
+          echo "依赖安装完成"
           npm run build
+          echo "项目构建完成"
           pm2 restart game_box
+          echo "服务重启完成，部署成功！"
 
