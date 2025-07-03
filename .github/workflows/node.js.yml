@@ -36,13 +36,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-    
-    - name: Add SSH known hosts
-      run: |
-        mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+    - uses: actions/checkout@v4
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -58,116 +52,22 @@ jobs:
 
     # 部署到Windows服务器
     - name: Deploy to Windows Server via SSH
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
-        debug: true
         script: |
-          echo "========================================="
-          echo "Starting deployment to Windows server..."
-          echo "Current time: $(date)"
-          echo "Current user: $(whoami)"
-          echo "Current directory: $(pwd)"
-          echo "System info: $(uname -a)"
-          
-          echo "========================================="
-          echo "Checking directories..."
-          echo "Checking /c/wwwroot/ directory:"
-          ls -la /c/wwwroot/ 2>/dev/null || echo "Path /c/wwwroot/ does not exist"
-          
-          echo "Checking C:/wwwroot/ directory:"
-          ls -la "C:/wwwroot/" 2>/dev/null || echo "Path C:/wwwroot/ does not exist"
-          
-          echo "Checking /mnt/c/wwwroot/ directory:"
-          ls -la /mnt/c/wwwroot/ 2>/dev/null || echo "Path /mnt/c/wwwroot/ does not exist"
-          
-          # Try to find the correct project path
-          PROJECT_PATH=""
-          if [ -d "/c/wwwroot/game_box" ]; then
-            PROJECT_PATH="/c/wwwroot/game_box"
-          elif [ -d "C:/wwwroot/game_box" ]; then
-            PROJECT_PATH="C:/wwwroot/game_box"
-          elif [ -d "/mnt/c/wwwroot/game_box" ]; then
-            PROJECT_PATH="/mnt/c/wwwroot/game_box"
-          else
-            echo "ERROR: Cannot find project directory, searching in following locations:"
-            find / -name "game_box" -type d 2>/dev/null | head -5 || echo "Search failed"
-            exit 1
-          fi
-          
-          echo "Found project directory: $PROJECT_PATH"
-          cd "$PROJECT_PATH"
-          echo "Successfully entered directory: $(pwd)"
-          
-          echo "========================================="
-          echo "Git check..."
-          git --version || { echo "Git is not available"; exit 1; }
-          git config --global --add safe.directory "$PROJECT_PATH"
-          git status || { echo "Git status failed"; exit 1; }
-          
-          echo "Current branch: $(git branch --show-current)"
-          echo "Latest commit: $(git log --oneline -1)"
-          
-          echo "========================================"
-          echo "Reset and pull..."
-          git reset --hard HEAD
-          git clean -fd
-          git fetch origin
+          echo "开始部署到Windows服务器..."
+          cd C:\wwwroot\game_box
+          echo "进入项目目录: C:\wwwroot\game_box"
           git pull origin main
-          echo "After pull commit: $(git log --oneline -1)"
-          
-          echo "========================================="
-          echo "Node.js environment..."
-          # Try multiple ways to load Node.js
-          if [ -f ~/.nvm/nvm.sh ]; then
-            echo "Loading NVM..."
-            source ~/.nvm/nvm.sh
-            nvm use 18 2>/dev/null || nvm use node 2>/dev/null || echo "NVM use failed"
-          fi
-          
-          # Check common Node.js paths
-          export PATH="$PATH:/usr/local/bin:/usr/bin:/bin"
-          export PATH="$PATH:$HOME/.nvm/versions/node/*/bin"
-          
-          echo "Node.js version: $(node --version 2>/dev/null || echo 'Not available')"
-          echo "NPM version: $(npm --version 2>/dev/null || echo 'Not available')"
-          
-          # If Node.js is not available, try other methods
-          if ! command -v node >/dev/null 2>&1; then
-            echo "Trying to find Node.js..."
-            find /usr -name "node" -type f 2>/dev/null | head -3
-            which node 2>/dev/null || echo "Node command not found"
-          fi
-          
-          echo "========================================="
-          echo "Installing dependencies..."
-          if command -v npm >/dev/null 2>&1; then
-            npm ci || npm install
-            echo "Dependencies installed"
-          else
-            echo "ERROR: NPM not available, cannot install dependencies"
-            exit 1
-          fi
-          
-          echo "========================================="
-          echo "Building project..."
-          npm run build || { echo "Build failed"; exit 1; }
-          echo "Build completed"
-          
-          echo "========================================="
-          echo "Restarting service..."
-          if command -v pm2 >/dev/null 2>&1; then
-            echo "Using PM2 to restart..."
-            pm2 restart game_box || pm2 start npm --name "game_box" -- start
-            pm2 list
-          else
-            echo "PM2 not available"
-          fi
-          
-          echo "========================================="
-          echo "Deployment completed!"
-          echo "Completion time: $(date)"
+          echo "代码拉取完成"
+          npm ci
+          echo "依赖安装完成"
+          npm run build
+          echo "项目构建完成"
+          pm2 restart game_box
+          echo "服务重启完成，部署成功！"
 
