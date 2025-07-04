@@ -78,59 +78,40 @@ echo Build completed successfully
 
 REM 重启服务
 echo ========================================
-echo Restarting service with PM2...
+echo Restarting service with npm...
 
-echo Checking PM2 installation...
-pm2 --version >nul 2>&1
-if errorlevel 1 (
-    echo ERROR: PM2 is not installed or not available
-    echo Installing PM2...
-    npm install -g pm2
-    if errorlevel 1 (
-        echo ERROR: Failed to install PM2
-        exit /b 1
+echo Stopping existing Node.js processes...
+taskkill /f /im node.exe >nul 2>&1
+taskkill /f /im npm.cmd >nul 2>&1
+timeout /t 2 >nul
+
+echo Checking if port 3000 is available...
+netstat -an | findstr :3000 >nul
+if not errorlevel 1 (
+    echo Warning: Port 3000 is still in use, trying to free it...
+    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :3000 ^| findstr LISTENING') do (
+        echo Killing process %%a
+        taskkill /f /pid %%a >nul 2>&1
     )
+    timeout /t 3 >nul
 )
 
-echo PM2 version:
-pm2 --version
-
-echo Current PM2 processes:
-pm2 list
-
-echo Stopping existing game_box process if exists...
-pm2 stop game_box >nul 2>&1
-echo Deleting existing game_box process if exists...
-pm2 delete game_box >nul 2>&1
-
-echo Creating logs directory...
-if not exist "logs" mkdir logs
-
-echo Starting new game_box process with ecosystem config...
-pm2 start ecosystem.config.js
-if errorlevel 1 (
-    echo ERROR: Failed to start service with PM2
-    echo Checking PM2 logs...
-    pm2 logs game_box --lines 10
-    exit /b 1
-)
+echo Starting service with npm...
+start /b call npm start
 
 echo Waiting for service to start...
-timeout /t 3 >nul
-
-echo Service status:
-pm2 list
+timeout /t 10 >nul
 
 echo Checking if service is running...
-pm2 describe game_box
+netstat -an | findstr :3000
 if errorlevel 1 (
-    echo ERROR: Service is not running properly
-    echo PM2 logs:
-    pm2 logs game_box --lines 20
+    echo ERROR: Service is not running on port 3000
+    echo Checking for any node processes...
+    tasklist | findstr node.exe
     exit /b 1
 )
 
-echo Service started successfully
+echo Service started successfully on port 3000
 
 echo ========================================
 echo Deployment completed successfully!
