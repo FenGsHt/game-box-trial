@@ -97,5 +97,4 @@ if not errorlevel 1 (
 )
 
 echo Starting service with npm...
-npm start
-
+start "Game Box Server" npm start
