@@ -137,7 +137,7 @@ echo Deployment completed successfully!
 echo Completion time: %date% %time%
 echo =======================================
 
-REM 如果是本地运行，添加暂停以便查看结果
+REM 如果是本地运行，添加暂停以便查看结果1
 if "%1"=="local" (
     echo.
     echo Press any key to exit...
