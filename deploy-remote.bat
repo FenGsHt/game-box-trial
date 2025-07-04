@@ -96,5 +96,37 @@ if not errorlevel 1 (
     timeout /t 3 >nul
 )
 
-echo Starting service with npm...
-start "Game Box Server" npm start
+echo Starting service with npm in background...
+start "Game Box Server" /min "C:\wwwroot\game_box\start-service.bat"
+
+echo Waiting for service to start...
+timeout /t 15 >nul
+
+echo Checking if service is running...
+netstat -an | findstr :3000 >nul
+if errorlevel 1 (
+    echo ERROR: Service is not running on port 3000
+    echo Checking for any node processes...
+    tasklist | findstr node.exe
+    echo Waiting a bit more and checking again...
+    timeout /t 10 >nul
+    netstat -an | findstr :3000 >nul
+    if errorlevel 1 (
+        echo ERROR: Service still not running after extended wait
+        exit /b 1
+    )
+)
+
+echo Service started successfully on port 3000
+
+echo ========================================
+echo Deployment completed successfully!
+echo Completion time: %date% %time%
+echo =======================================
+
+REM 如果是本地运行，添加暂停以便查看结果
+if "%1"=="local" (
+    echo.
+    echo Press any key to exit...
+    pause >nul
+)
