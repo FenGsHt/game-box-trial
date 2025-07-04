@@ -97,7 +97,7 @@ if not errorlevel 1 (
 )
 
 echo Starting service with npm...
-start /b call npm start
+call npm start
 
 echo Waiting for service to start...
 timeout /t 10 >nul
