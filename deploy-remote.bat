@@ -73,7 +73,7 @@ git log --oneline -1
 REM 构建项目
 echo ========================================
 echo Building project...
-npm run build
+call npm run build
 echo Build completed successfully
 
 REM 重启服务
