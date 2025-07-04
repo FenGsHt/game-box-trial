@@ -97,30 +97,5 @@ if not errorlevel 1 (
 )
 
 echo Starting service with npm...
-npm start
+start /b npm start
 
-echo Waiting for service to start...
-timeout /t 10 >nul
-
-echo Checking if service is running...
-netstat -an | findstr :3000
-if errorlevel 1 (
-    echo ERROR: Service is not running on port 3000
-    echo Checking for any node processes...
-    tasklist | findstr node.exe
-    exit /b 1
-)
-
-echo Service started successfully on port 3000
-
-echo ========================================
-echo Deployment completed successfully!
-echo Completion time: %date% %time%
-echo =======================================
-
-REM 如果是本地运行，添加暂停以便查看结果1
-if "%1"=="local" (
-    echo.
-    echo Press any key to exit...
-    pause >nul
-)
