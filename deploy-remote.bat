@@ -80,34 +80,57 @@ REM 重启服务
 echo ========================================
 echo Restarting service with PM2...
 
-echo Checking if game_box process exists...
-pm2 describe game_box >nul 2>&1
+echo Checking PM2 installation...
+pm2 --version >nul 2>&1
 if errorlevel 1 (
-    echo game_box process not found, starting fresh...
-    pm2 start npm --name "game_box" -- start
+    echo ERROR: PM2 is not installed or not available
+    echo Installing PM2...
+    npm install -g pm2
     if errorlevel 1 (
-        echo ERROR: Failed to start service with PM2
+        echo ERROR: Failed to install PM2
         exit /b 1
     )
-    echo Service started successfully
-) else (
-    echo game_box process found, restarting...
-    pm2 restart game_box
-    if errorlevel 1 (
-        echo PM2 restart failed, trying to start fresh...
-        pm2 stop game_box >nul 2>&1
-        pm2 delete game_box >nul 2>&1
-        pm2 start npm --name "game_box" -- start
-        if errorlevel 1 (
-            echo ERROR: Failed to start service with PM2
-            exit /b 1
-        )
-    )
-    echo Service restarted successfully
 )
+
+echo PM2 version:
+pm2 --version
+
+echo Current PM2 processes:
+pm2 list
+
+echo Stopping existing game_box process if exists...
+pm2 stop game_box >nul 2>&1
+echo Deleting existing game_box process if exists...
+pm2 delete game_box >nul 2>&1
+
+echo Creating logs directory...
+if not exist "logs" mkdir logs
+
+echo Starting new game_box process with ecosystem config...
+pm2 start ecosystem.config.js
+if errorlevel 1 (
+    echo ERROR: Failed to start service with PM2
+    echo Checking PM2 logs...
+    pm2 logs game_box --lines 10
+    exit /b 1
+)
+
+echo Waiting for service to start...
+timeout /t 3 >nul
 
 echo Service status:
 pm2 list
+
+echo Checking if service is running...
+pm2 describe game_box
+if errorlevel 1 (
+    echo ERROR: Service is not running properly
+    echo PM2 logs:
+    pm2 logs game_box --lines 20
+    exit /b 1
+)
+
+echo Service started successfully
 
 echo ========================================
 echo Deployment completed successfully!
