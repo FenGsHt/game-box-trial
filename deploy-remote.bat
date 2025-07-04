@@ -97,5 +97,5 @@ if not errorlevel 1 (
 )
 
 echo Starting service with npm...
-start /b npm start
+start npm start
 
